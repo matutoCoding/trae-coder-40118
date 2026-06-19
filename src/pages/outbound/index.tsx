@@ -1,25 +1,38 @@
-import React, { useState, useMemo } from 'react'
-import { View, Text, ScrollView } from '@tarojs/components'
+import React, { useState, useMemo, useEffect } from 'react'
+import { View, Text, ScrollView, Input, Picker } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import classnames from 'classnames'
 import { useGrainStore } from '@/store'
-import { getOutboundStatusText } from '@/utils/helpers'
+import { getOutboundStatusText, getDaysLeft } from '@/utils/helpers'
 import StatusTag from '@/components/StatusTag'
 import EmptyState from '@/components/EmptyState'
 import styles from './index.module.scss'
 
 const TABS = [
-  { label: '先进先出', value: 'fifo' },
+  { label: '办理出库', value: 'fifo' },
   { label: '出库记录', value: 'records' }
 ]
 
 const OutboundPage: React.FC = () => {
-  const { batches, outboundRecords, getFifoBatches } = useGrainStore()
+  const { merchants, getFifoBatches, outboundRecords, createOutbound, getMerchantQuota } = useGrainStore()
   const [activeTab, setActiveTab] = useState('fifo')
+  const [merchantIdx, setMerchantIdx] = useState<string>('')
+  const [quantity, setQuantity] = useState<string>('')
+  const [submitting, setSubmitting] = useState(false)
 
-  const fifoBatches = useMemo(() => {
-    return getFifoBatches().slice(0, 5)
+  const fifoBatches = useMemo(() => getFifoBatches().slice(0, 10), [getFifoBatches])
+  const totalAvailable = useMemo(() => {
+    return getFifoBatches().reduce((sum, b) => sum + b.remainingQuantity, 0)
   }, [getFifoBatches])
+
+  const selectedMerchant = useMemo(
+    () => (merchantIdx ? merchants[Number(merchantIdx)] : null),
+    [merchantIdx, merchants]
+  )
+  const merchantQuota = useMemo(
+    () => (selectedMerchant ? getMerchantQuota(selectedMerchant.merchantId) : undefined),
+    [selectedMerchant, getMerchantQuota]
+  )
 
   const sortedRecords = useMemo(() => {
     return [...outboundRecords].sort(
@@ -27,17 +40,50 @@ const OutboundPage: React.FC = () => {
     )
   }, [outboundRecords])
 
-  const handleOutbound = (batchNo: string, grainType: string) => {
-    Taro.showModal({
-      title: '确认出库',
-      content: `确认为批次 ${batchNo}（${grainType}）办理出库？将按先进先出规则执行。`,
-      success: (res) => {
-        if (res.confirm) {
-          console.info('[Outbound] 确认出库:', batchNo)
-          Taro.showToast({ title: '出库申请已提交', icon: 'success' })
-        }
+  const merchantNames = useMemo(() => merchants.map((m) => m.merchantName), [merchants])
+
+  const handleCreateOutbound = async () => {
+    if (!selectedMerchant) {
+      Taro.showToast({ title: '请选择提货商户', icon: 'none' })
+      return
+    }
+    const qty = Number(quantity)
+    if (!qty || qty <= 0) {
+      Taro.showToast({ title: '请输入有效的出库数量', icon: 'none' })
+      return
+    }
+    setSubmitting(true)
+    try {
+      const result = await createOutbound(
+        selectedMerchant.merchantId,
+        selectedMerchant.merchantName,
+        qty
+      )
+      if (result.success) {
+        Taro.showToast({ title: '出库成功', icon: 'success' })
+        setQuantity('')
+        setMerchantIdx('')
+        setTimeout(() => setActiveTab('records'), 800)
+      } else {
+        Taro.showModal({
+          title: result.needApply ? '额度不足' : '出库失败',
+          content: result.message,
+          confirmText: result.needApply ? '申请追加' : '知道了',
+          success: (res) => {
+            if (res.confirm && result.needApply && selectedMerchant) {
+              Taro.navigateTo({
+                url: `/pages/quotaApply/index?merchantId=${selectedMerchant.merchantId}&merchantName=${selectedMerchant.merchantName}`
+              })
+            }
+          }
+        })
       }
-    })
+    } catch (e) {
+      console.error('[OutboundPage] 出库异常', e)
+      Taro.showToast({ title: '系统异常，请重试', icon: 'none' })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleRecordDetail = (id: string) => {
@@ -59,55 +105,121 @@ const OutboundPage: React.FC = () => {
         ))}
       </View>
 
-      <ScrollView scrollY className={styles.content} style={{ height: 'calc(100vh - 120rpx)' }}>
+      <ScrollView scrollY style={{ height: 'calc(100vh - 120rpx)' }}>
         {activeTab === 'fifo' ? (
-          <View className={styles.fifoSection}>
-            <View className={styles.fifoHeader}>
-              <Text className={styles.fifoIcon}>📋</Text>
-              <Text className={styles.fifoTitle}>出库优先队列</Text>
-              <Text className={styles.fifoDesc}>按入仓日期排列</Text>
+          <View className={styles.content}>
+            <View className={styles.outboundForm}>
+              <Text className={styles.sectionTitle}>出库办理</Text>
+
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>
+                  <Text style={{ color: '#D93025', marginRight: '4rpx' }}>*</Text>
+                  提货商户
+                </Text>
+                <Picker
+                  mode='selector'
+                  range={merchantNames}
+                  value={merchantIdx ? Number(merchantIdx) : undefined}
+                  onChange={(e) => setMerchantIdx(String(e.detail.value))}
+                >
+                  <View className={styles.pickerValue}>
+                    <Text className={!selectedMerchant ? styles.pickerPlaceholder : ''}>
+                      {selectedMerchant ? selectedMerchant.merchantName : '请选择提货商户'}
+                    </Text>
+                  </View>
+                </Picker>
+                {merchantQuota && (
+                  <View className={styles.quotaBadge}>
+                    <Text className={styles.quotaBadgeText}>
+                      本季额度：{merchantQuota.used}/{merchantQuota.baseQuota}{merchantQuota.approved ? `(+${merchantQuota.approved})` : ''}吨（剩余
+                      {merchantQuota.baseQuota + (merchantQuota.approved || 0) - merchantQuota.used}吨）
+                    </Text>
+                    {merchantQuota.status === 'exhausted' && (
+                      <StatusTag status='exhausted' text='已用尽' size='small' />
+                    )}
+                  </View>
+                )}
+              </View>
+
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>
+                  <Text style={{ color: '#D93025', marginRight: '4rpx' }}>*</Text>
+                  出库数量(吨)
+                </Text>
+                <Input
+                  className={styles.formInput}
+                  type='digit'
+                  placeholder={`请输入出库数量，当前可用库存${totalAvailable}吨`}
+                  value={quantity}
+                  onInput={(e) => setQuantity(e.detail.value)}
+                />
+              </View>
+
+              <View className={styles.submitBtn} onClick={!submitting ? handleCreateOutbound : undefined}>
+                <Text className={styles.submitBtnText}>
+                  {submitting ? '处理中...' : '确认办理出库'}
+                </Text>
+              </View>
+
+              <View className={styles.ruleHint}>
+                <Text className={styles.ruleHintText}>
+                  💡 严格按「先进先出」规则扣减最早入仓的可出批次库存；超期/锁定批次不可出库；额度不足需先申请。
+                </Text>
+              </View>
             </View>
-            {fifoBatches.length > 0 ? (
-              fifoBatches.map((batch, index) => (
-                <View key={batch.id} className={styles.fifoCard}>
-                  <View className={styles.fifoCardTop}>
-                    <Text className={styles.fifoBatchNo}>{batch.batchNo}</Text>
-                    <Text className={styles.fifoOrder}>第{index + 1}优先</Text>
+
+            <View className={styles.fifoSection}>
+              <View className={styles.fifoHeader}>
+                <Text className={styles.fifoIcon}>📋</Text>
+                <Text className={styles.fifoTitle}>出库优先队列（按入仓日期排序）</Text>
+              </View>
+              {fifoBatches.length > 0 ? (
+                fifoBatches.map((batch, index) => (
+                  <View key={batch.id} className={styles.fifoCard}>
+                    <View className={styles.fifoCardTop}>
+                      <Text className={styles.fifoBatchNo}>{batch.batchNo}</Text>
+                      <Text className={styles.fifoOrder}>第{index + 1}优先</Text>
+                    </View>
+                    <View className={styles.fifoBody}>
+                      <View className={styles.fifoInfoItem}>
+                        <Text className={styles.fifoInfoLabel}>品种</Text>
+                        <Text className={styles.fifoInfoValue}>{batch.grainType}</Text>
+                      </View>
+                      <View className={styles.fifoInfoItem}>
+                        <Text className={styles.fifoInfoLabel}>仓号</Text>
+                        <Text className={styles.fifoInfoValue}>{batch.warehouseNo}</Text>
+                      </View>
+                      <View className={styles.fifoInfoItem}>
+                        <Text className={styles.fifoInfoLabel}>剩余</Text>
+                        <Text className={styles.fifoInfoValue}>{batch.remainingQuantity}{batch.unit}</Text>
+                      </View>
+                      <View className={styles.fifoInfoItem}>
+                        <Text className={styles.fifoInfoLabel}>入仓</Text>
+                        <Text className={styles.fifoInfoValue}>{batch.inboundDate}</Text>
+                      </View>
+                      {getDaysLeft(batch.expiryDate) <= 90 && (
+                        <View className={styles.fifoInfoItem}>
+                          <Text className={styles.fifoInfoLabel}>状态</Text>
+                          <Text className={classnames(
+                            styles.fifoInfoValue,
+                            batch.status === 'warning' && styles.warningText
+                          )}>
+                            <StatusTag status={batch.status} text={
+                              batch.status === 'warning' ? '临期' : batch.status
+                            } size='small' />
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                  <View className={styles.fifoBody}>
-                    <View className={styles.fifoInfoItem}>
-                      <Text className={styles.fifoInfoLabel}>品种</Text>
-                      <Text className={styles.fifoInfoValue}>{batch.grainType}</Text>
-                    </View>
-                    <View className={styles.fifoInfoItem}>
-                      <Text className={styles.fifoInfoLabel}>仓号</Text>
-                      <Text className={styles.fifoInfoValue}>{batch.warehouseNo}</Text>
-                    </View>
-                    <View className={styles.fifoInfoItem}>
-                      <Text className={styles.fifoInfoLabel}>剩余</Text>
-                      <Text className={styles.fifoInfoValue}>{batch.remainingQuantity}{batch.unit}</Text>
-                    </View>
-                    <View className={styles.fifoInfoItem}>
-                      <Text className={styles.fifoInfoLabel}>入仓</Text>
-                      <Text className={styles.fifoInfoValue}>{batch.inboundDate}</Text>
-                    </View>
-                  </View>
-                  <View className={styles.fifoAction}>
-                    <View
-                      className={styles.outBtn}
-                      onClick={() => handleOutbound(batch.batchNo, batch.grainType)}
-                    >
-                      <Text style={{ color: '#fff', fontSize: '24rpx', fontWeight: 500 }}>办理出库</Text>
-                    </View>
-                  </View>
-                </View>
-              ))
-            ) : (
-              <EmptyState message='暂无可出库批次' />
-            )}
+                ))
+              ) : (
+                <EmptyState message='暂无可出库批次' />
+              )}
+            </View>
           </View>
         ) : (
-          <View>
+          <View className={styles.content}>
             {sortedRecords.length > 0 ? (
               sortedRecords.map((record) => (
                 <View

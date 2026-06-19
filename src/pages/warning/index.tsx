@@ -13,15 +13,20 @@ const TABS = [
 ]
 
 const WarningPage: React.FC = () => {
-  const { batches } = useGrainStore()
+  const { getBatchesWithComputedStatus } = useGrainStore()
   const [activeTab, setActiveTab] = useState('warning')
 
+  const allBatches = useMemo(() => getBatchesWithComputedStatus(), [getBatchesWithComputedStatus])
+
   const warningList = useMemo(() => {
-    return batches
-      .filter((b) => activeTab === 'warning' ? b.status === 'warning' : (b.status === 'expired' || b.status === 'locked'))
+    const filtered = allBatches.filter((b) => {
+      if (activeTab === 'warning') return b.status === 'warning'
+      return b.status === 'expired' || b.status === 'locked'
+    })
+    return filtered
       .map((b) => ({ ...b, daysLeft: getDaysLeft(b.expiryDate) }))
       .sort((a, b) => a.daysLeft - b.daysLeft)
-  }, [batches, activeTab])
+  }, [allBatches, activeTab])
 
   return (
     <View className={styles.container}>
@@ -32,7 +37,7 @@ const WarningPage: React.FC = () => {
             className={classnames(styles.tab, activeTab === tab.value && styles.tabActive)}
             onClick={() => setActiveTab(tab.value)}
           >
-            <Text className={styles.tabText}>{tab.label}</Text>
+            <Text className={styles.tabText}>{tab.label} ({warningList.length})</Text>
             {activeTab === tab.value && <View className={styles.tabLine} />}
           </View>
         ))}
@@ -89,13 +94,13 @@ const WarningPage: React.FC = () => {
               )}
               {item.status === 'expired' && (
                 <View className={styles.lockedTag}>
-                  <Text className={styles.lockedTagText}>⚠️ 已超期 · 待锁定</Text>
+                  <Text className={styles.lockedTagText}>⚠️ 已超期 · 自动排除出库队列</Text>
                 </View>
               )}
             </View>
           ))
         ) : (
-          <EmptyState message={activeTab === 'warning' ? '暂无临期批次' : '暂无超期/锁定批次'} />
+          <EmptyState message={activeTab === 'warning' ? '暂无临期批次，状态良好' : '暂无超期/锁定批次'} />
         )}
       </ScrollView>
     </View>

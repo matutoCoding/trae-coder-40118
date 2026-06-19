@@ -1,73 +1,103 @@
-@use '@/styles/variables.scss' as *;
+@import '@/styles/variables.scss';
 
 .container {
+  padding: $spacing-lg;
+  padding-bottom: 160rpx;
+  background-color: $color-bg-page;
   min-height: 100vh;
-  background: linear-gradient(180deg, #2D7D46 0%, #F5F3EE 360rpx);
-  padding-bottom: $spacing-xl;
+  box-sizing: border-box;
 }
 
-.heroSection {
-  padding: $spacing-lg $page-padding;
-  margin-bottom: $spacing-sm;
+.header {
+  padding: $spacing-md 0 $spacing-lg;
 }
 
-.heroTitle {
+.headerTitle {
   font-size: $font-size-xxl;
   font-weight: $font-weight-bold;
-  color: $color-text-white;
-  margin-bottom: $spacing-xs;
+  color: $color-text-primary;
+  display: block;
 }
 
-.heroSubtitle {
-  font-size: $font-size-md;
-  color: rgba(255, 255, 255, 0.8);
+.headerDate {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-top: $spacing-xs;
+  display: block;
 }
 
 .statsGrid {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 $page-padding;
-  margin-bottom: $spacing-lg;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+  margin-bottom: $spacing-xl;
 }
 
-.statItem {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: $radius-md;
-  padding: $spacing-md 0;
-  margin: 0 6rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  backdrop-filter: blur(10px);
+.quotaOverview {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-xl;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+}
+
+.quotaStats {
+  margin-top: $spacing-md;
 }
 
 .statRow {
   display: flex;
   align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
 }
 
-.statValue {
+.quotaStatValue {
   font-size: 44rpx;
   font-weight: $font-weight-bold;
-  color: $color-text-white;
+  color: $color-primary;
 }
 
-.statUnit {
-  font-size: 20rpx;
-  color: rgba(255, 255, 255, 0.7);
-  margin-left: 2rpx;
+.quotaStatLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
 }
 
-.statLabel {
-  font-size: $font-size-xs;
-  color: rgba(255, 255, 255, 0.7);
-  margin-top: 4rpx;
+.quotaProgressWrap {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
 }
 
-.section {
-  padding: 0 $page-padding;
-  margin-bottom: $spacing-lg;
+.quotaProgress {
+  flex: 1;
+  height: 16rpx;
+  background-color: #F0F4FA;
+  border-radius: $radius-round;
+  overflow: hidden;
+}
+
+.quotaProgressBar {
+  height: 100%;
+  background: linear-gradient(90deg, #2D7D46 0%, #165DFF 100%);
+  border-radius: $radius-round;
+  transition: width 0.5s ease;
+}
+
+.quotaProgressBarWarn {
+  background: linear-gradient(90deg, #FFB800 0%, #FF8800 100%);
+}
+
+.quotaProgressBarDanger {
+  background: linear-gradient(90deg, #FF5252 0%, #D93025 100%);
+}
+
+.quotaPercent {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+  width: 80rpx;
+  text-align: right;
 }
 
 .sectionHeader {
@@ -83,177 +113,140 @@
   color: $color-text-primary;
 }
 
-.sectionMore {
+.sectionAction {
   font-size: $font-size-sm;
-  color: #2D7D46;
+  color: $color-primary;
 }
 
-.quickActions {
+.urgentSection {
+  margin-bottom: $spacing-xl;
+}
+
+.urgentCard {
   display: flex;
   justify-content: space-between;
-  padding: 0 $page-padding;
-  margin-bottom: $spacing-lg;
-}
-
-.actionItem {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  width: 160rpx;
-  height: 160rpx;
   background-color: $color-bg-card;
-  border-radius: $radius-lg;
-  box-shadow: $shadow-card;
-  transition: all $transition-base;
-
-  &:active {
-    opacity: 0.9;
-    transform: scale(0.97);
-  }
-}
-
-.actionIcon {
-  font-size: 48rpx;
-  margin-bottom: $spacing-xs;
-}
-
-.actionText {
-  font-size: $font-size-sm;
-  color: $color-text-primary;
-  font-weight: $font-weight-medium;
-}
-
-.warningCard {
-  background-color: $color-bg-card;
-  border-radius: $radius-lg;
+  border-radius: $radius-md;
   padding: $spacing-lg;
-  box-shadow: $shadow-card;
   margin-bottom: $spacing-md;
+  border-left: 6rpx solid #2D7D46;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
 }
 
-.warningHeader {
-  display: flex;
-  align-items: center;
-  margin-bottom: $spacing-md;
+.urgentCardWarning {
+  border-left-color: #FFB800;
+  background-color: rgba(255, 184, 0, 0.03);
 }
 
-.warningDot {
-  width: 16rpx;
-  height: 16rpx;
-  border-radius: $radius-round;
-  background-color: #E8A838;
-  margin-right: $spacing-sm;
+.urgentCardDanger {
+  border-left-color: #D93025;
+  background-color: rgba(217, 48, 37, 0.03);
 }
 
-.dangerDot {
-  background-color: #D93025;
+.urgentLeft {
+  flex: 1;
 }
 
-.warningTitle {
+.urgentBatchNo {
   font-size: $font-size-md;
   font-weight: $font-weight-semibold;
   color: $color-text-primary;
+  display: block;
 }
 
-.warningCount {
-  margin-left: auto;
-  font-size: $font-size-sm;
-  color: #D93025;
-  font-weight: $font-weight-medium;
-}
-
-.warningItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-sm 0;
-  border-bottom: 1rpx solid $color-divider;
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.warningBatchNo {
-  font-size: $font-size-md;
-  color: $color-text-primary;
-  font-weight: $font-weight-medium;
-}
-
-.warningInfo {
+.urgentBatchInfo {
   font-size: $font-size-sm;
   color: $color-text-secondary;
-  margin-top: 4rpx;
+  margin-top: $spacing-xs;
+  display: block;
 }
 
-.warningDays {
-  font-size: $font-size-sm;
+.urgentRight {
+  text-align: right;
+}
+
+.urgentDays {
+  font-size: $font-size-md;
   font-weight: $font-weight-semibold;
-  white-space: nowrap;
+  color: #2D7D46;
+  display: block;
 }
 
-.warningDaysWarning {
-  color: #C88600;
+.urgentDaysWarn {
+  color: #FFB800;
 }
 
-.warningDaysDanger {
+.urgentDaysDanger {
   color: #D93025;
 }
 
-.recentCard {
+.urgentDate {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-top: $spacing-xs;
+  display: block;
+}
+
+.emptyTip {
+  padding: $spacing-xl 0;
+  text-align: center;
   background-color: $color-bg-card;
-  border-radius: $radius-lg;
-  padding: $spacing-lg;
-  box-shadow: $shadow-card;
+  border-radius: $radius-md;
+}
+
+.emptyTipText {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.recentSection {
+  margin-bottom: $spacing-xxl;
 }
 
 .recentItem {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: $spacing-sm 0;
-  border-bottom: 1rpx solid $color-divider;
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.recentIcon {
-  width: 56rpx;
-  height: 56rpx;
+  background-color: $color-bg-card;
   border-radius: $radius-md;
-  @include flex-center;
-  margin-right: $spacing-md;
-  font-size: 28rpx;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
 }
 
-.recentIconOut {
-  background-color: rgba(45, 125, 70, 0.1);
-}
-
-.recentIconIn {
-  background-color: rgba(22, 93, 255, 0.1);
-}
-
-.recentContent {
+.recentLeft {
   flex: 1;
 }
 
-.recentTitle {
+.recentMerchant {
   font-size: $font-size-md;
-  color: $color-text-primary;
   font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  display: block;
 }
 
-.recentDesc {
-  font-size: $font-size-sm;
+.recentNo {
+  font-size: 22rpx;
   color: $color-text-tertiary;
-  margin-top: 4rpx;
+  margin-top: $spacing-xs;
+  display: block;
 }
 
-.recentTime {
-  font-size: $font-size-xs;
+.recentRight {
+  text-align: right;
+}
+
+.recentQuantity {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-success;
+  display: block;
+}
+
+.recentDate {
+  font-size: 22rpx;
   color: $color-text-tertiary;
-  white-space: nowrap;
+  margin-top: $spacing-xs;
+  display: block;
 }

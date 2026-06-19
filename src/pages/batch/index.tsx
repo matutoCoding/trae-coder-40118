@@ -16,12 +16,14 @@ const FILTER_OPTIONS = [
 ]
 
 const BatchPage: React.FC = () => {
-  const { batches } = useGrainStore()
+  const { getBatchesWithComputedStatus } = useGrainStore()
   const [keyword, setKeyword] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')
 
+  const allBatches = useMemo(() => getBatchesWithComputedStatus(), [getBatchesWithComputedStatus])
+
   const filteredBatches = useMemo(() => {
-    let result = batches
+    let result = allBatches
     if (activeFilter !== 'all') {
       result = result.filter((b) => b.status === activeFilter)
     }
@@ -36,7 +38,7 @@ const BatchPage: React.FC = () => {
       )
     }
     return result
-  }, [batches, activeFilter, keyword])
+  }, [allBatches, activeFilter, keyword])
 
   const handleAddBatch = () => {
     Taro.navigateTo({ url: '/pages/inbound/index' })

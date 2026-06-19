@@ -5,17 +5,19 @@ import { useGrainStore } from '@/store'
 import styles from './index.module.scss'
 
 const QuotaApplyPage: React.FC = () => {
-  const { quotas } = useGrainStore()
+  const { getActiveQuotas, applyQuota: submitApplyQuota } = useGrainStore()
   const params = Taro.getCurrentInstance().router?.params
   const merchantId = params?.merchantId || ''
-  const merchantName = params?.merchantName || ''
+  const merchantName = decodeURIComponent(params?.merchantName || '')
 
+  const quotas = getActiveQuotas()
   const currentQuota = quotas.find((q) => q.merchantId === merchantId && (q.status === 'active' || q.status === 'exhausted'))
 
   const [applyQuota, setApplyQuota] = useState('')
   const [reason, setReason] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!applyQuota || Number(applyQuota) <= 0) {
       Taro.showToast({ title: '请输入有效申请额度', icon: 'none' })
       return
@@ -24,10 +26,28 @@ const QuotaApplyPage: React.FC = () => {
       Taro.showToast({ title: '请填写申请原因', icon: 'none' })
       return
     }
-    console.info('[QuotaApply] 提交申请:', { merchantId, applyQuota, reason })
-    Taro.showToast({ title: '额度申请已提交', icon: 'success' })
-    setTimeout(() => Taro.navigateBack(), 1500)
+    setSubmitting(true)
+    try {
+      const success = await submitApplyQuota(merchantId, Number(applyQuota), reason)
+      if (success) {
+        console.info('[QuotaApply] 申请已批准:', { merchantId, applyQuota, reason })
+        Taro.showToast({ title: '额度已追加成功', icon: 'success' })
+        setTimeout(() => Taro.navigateBack(), 1200)
+      } else {
+        Taro.showToast({ title: '申请失败，请重试', icon: 'none' })
+      }
+    } catch (e) {
+      console.error('[QuotaApply] 申请异常', e)
+      Taro.showToast({ title: '系统异常', icon: 'none' })
+    } finally {
+      setSubmitting(false)
+    }
   }
+
+  const baseQuota = currentQuota?.baseQuota || 0
+  const used = currentQuota?.used || 0
+  const approved = currentQuota?.approved || 0
+  const remaining = baseQuota + approved - used
 
   return (
     <View className={styles.container}>
@@ -36,7 +56,10 @@ const QuotaApplyPage: React.FC = () => {
           <Text className={styles.sectionTitle}>申请信息</Text>
           <View className={styles.merchantInfo}>
             <Text className={styles.merchantInfoText}>
-              商户「{merchantName}」当前季度额度已用尽（总额{currentQuota?.totalQuota || 0}吨，已用{currentQuota?.usedQuota || 0}吨），需申请追加额度。
+              商户「{merchantName}」当前季度：基额{baseQuota}吨
+              {approved > 0 && ` + 已追加${approved}吨`}，
+              已用{used}吨，剩余{remaining}吨。
+              {remaining <= 0 && ' 额度已用尽，请申请追加额度。'}
             </Text>
           </View>
           <View className={styles.formItem}>
@@ -62,8 +85,10 @@ const QuotaApplyPage: React.FC = () => {
       </ScrollView>
 
       <View className={styles.bottomBar}>
-        <View className={styles.submitBtn} onClick={handleSubmit}>
-          <Text style={{ fontSize: '32rpx', color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>提交申请</Text>
+        <View className={styles.submitBtn} onClick={!submitting ? handleSubmit : undefined}>
+          <Text style={{ fontSize: '32rpx', color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>
+            {submitting ? '提交中...' : '提交申请'}
+          </Text>
         </View>
       </View>
     </View>

@@ -1,22 +1,66 @@
-@use '@/styles/variables.scss' as *;
+@import '@/styles/variables.scss';
 
 .container {
-  min-height: 100vh;
   background-color: $color-bg-page;
-  padding-bottom: 40rpx;
+  min-height: 100vh;
+}
+
+.header {
+  background: linear-gradient(135deg, $color-primary 0%, #1A4B7A 100%);
+  padding: $spacing-xl $spacing-lg;
+  padding-top: $spacing-xxl;
+}
+
+.headerTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-inverse;
+  display: block;
+  margin-bottom: $spacing-lg;
+}
+
+.quotaHeaderStats {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.headerStatItem {
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  backdrop-filter: blur(10px);
+}
+
+.headerStatValue {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-inverse;
+  display: block;
+}
+
+.headerStatValueDanger {
+  color: #FFD8D8;
+}
+
+.headerStatLabel {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: $spacing-xs;
+  display: block;
 }
 
 .tabs {
   display: flex;
   background-color: $color-bg-card;
-  padding: 0 $page-padding;
-  border-bottom: 1rpx solid $color-divider;
+  padding: 0 $spacing-lg;
+  border-bottom: 1rpx solid $color-border-light;
 }
 
 .tab {
   flex: 1;
+  padding: $spacing-lg 0;
   text-align: center;
-  padding: $spacing-md 0;
   position: relative;
 }
 
@@ -25,11 +69,9 @@
   color: $color-text-secondary;
 }
 
-.tabActive {
-  .tabText {
-    color: #2D7D46;
-    font-weight: $font-weight-semibold;
-  }
+.tabActive .tabText {
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
 }
 
 .tabLine {
@@ -37,52 +79,15 @@
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 48rpx;
+  width: 60rpx;
   height: 6rpx;
-  border-radius: 3rpx;
-  background-color: #2D7D46;
+  background-color: $color-primary;
+  border-radius: $radius-round;
 }
 
-.summaryCard {
-  margin: $spacing-md $page-padding;
-  background: linear-gradient(135deg, #2D7D46 0%, #1E5C32 100%);
-  border-radius: $radius-lg;
+.list {
   padding: $spacing-lg;
-  box-shadow: 0 4rpx 16rpx rgba(45, 125, 70, 0.25);
-}
-
-.summaryRow {
-  display: flex;
-  justify-content: space-between;
-}
-
-.summaryItem {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-}
-
-.summaryValue {
-  font-size: 44rpx;
-  font-weight: $font-weight-bold;
-  color: $color-text-white;
-}
-
-.summaryUnit {
-  font-size: 20rpx;
-  color: rgba(255, 255, 255, 0.7);
-  margin-left: 2rpx;
-}
-
-.summaryLabel {
-  font-size: $font-size-xs;
-  color: rgba(255, 255, 255, 0.7);
-  margin-top: 8rpx;
-}
-
-.content {
-  padding: 0 $page-padding;
+  padding-bottom: 200rpx;
 }
 
 .quotaCard {
@@ -90,117 +95,176 @@
   border-radius: $radius-lg;
   padding: $spacing-lg;
   margin-bottom: $spacing-md;
-  box-shadow: $shadow-card;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
-.quotaHeader {
+.quotaCardHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: $spacing-md;
+  margin-bottom: $spacing-lg;
 }
 
-.merchantName {
+.quotaMerchantInfo {
+  flex: 1;
+}
+
+.quotaMerchantName {
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
   color: $color-text-primary;
+  display: block;
 }
 
-.quotaQuarter {
-  font-size: $font-size-sm;
+.quotaMerchantId {
+  font-size: 22rpx;
   color: $color-text-tertiary;
   margin-top: 4rpx;
+  display: block;
 }
 
-.quotaAction {
-  @include button-reset;
-  height: 56rpx;
-  padding: 0 $spacing-md;
-  border-radius: $radius-round;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-
-  &:active {
-    opacity: 0.9;
-  }
-}
-
-.quotaActionApply {
-  background-color: #2D7D46;
-  color: $color-text-white;
-}
-
-.quotaActionView {
+.quotaStatus {
+  padding: $spacing-xs $spacing-md;
   background-color: rgba(45, 125, 70, 0.1);
+  border-radius: $radius-round;
+}
+
+.quotaStatusWarning {
+  background-color: rgba(255, 184, 0, 0.1);
+}
+
+.quotaStatusExhausted {
+  background-color: rgba(217, 48, 37, 0.1);
+}
+
+.quotaStatusText {
+  font-size: 22rpx;
   color: #2D7D46;
 }
 
-.quotaActionDisabled {
-  background-color: $color-bg-page;
-  color: $color-text-disabled;
+.quotaStatusWarning .quotaStatusText {
+  color: #B26A00;
 }
 
-.consumptionCard {
-  background-color: $color-bg-card;
-  border-radius: $radius-lg;
-  padding: $spacing-lg;
+.quotaStatusExhausted .quotaStatusText {
+  color: #D93025;
+  font-weight: $font-weight-semibold;
+}
+
+.quotaActions {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-lg;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-border-light;
+}
+
+.quotaActionBtn {
+  flex: 1;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-md;
+}
+
+.quotaActionBtnPrimary {
+  background-color: $color-primary;
+}
+
+.quotaActionBtnDefault {
+  background-color: rgba(22, 93, 255, 0.06);
+  border: 1rpx solid rgba(22, 93, 255, 0.15);
+}
+
+.quotaActionBtnText {
+  font-size: $font-size-sm;
+  color: $color-text-inverse;
+  font-weight: $font-weight-medium;
+}
+
+.quotaActionBtnTextSecondary {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.merchantFilter {
+  display: flex;
+  align-items: center;
+  background-color: rgba(22, 93, 255, 0.06);
+  padding: $spacing-md $spacing-lg;
+  border-radius: $radius-md;
   margin-bottom: $spacing-md;
-  box-shadow: $shadow-card;
+  gap: $spacing-sm;
 }
 
-.consumptionHeader {
+.merchantFilterLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.merchantFilterValue {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.merchantFilterClear {
+  padding: 4rpx $spacing-md;
+  background-color: rgba(22, 93, 255, 0.1);
+  border-radius: $radius-round;
+}
+
+.merchantFilterClearText {
+  font-size: 22rpx;
+  color: $color-primary;
+}
+
+.consumptionItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: $spacing-sm;
+  background-color: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+}
+
+.consumptionLeft {
+  flex: 1;
 }
 
 .consumptionMerchant {
   font-size: $font-size-md;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-}
-
-.consumptionDate {
-  font-size: $font-size-sm;
-  color: $color-text-tertiary;
-}
-
-.consumptionBody {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-md;
-  padding-top: $spacing-sm;
-  border-top: 1rpx solid $color-divider;
-}
-
-.consumptionInfo {
-  display: flex;
-  align-items: center;
-}
-
-.consumptionLabel {
-  font-size: $font-size-sm;
-  color: $color-text-tertiary;
-  margin-right: 8rpx;
-}
-
-.consumptionValue {
-  font-size: $font-size-sm;
-  color: $color-text-primary;
   font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  display: block;
 }
 
-.resetNotice {
-  margin: $spacing-md $page-padding;
-  background-color: rgba(232, 168, 56, 0.08);
-  border-radius: $radius-md;
-  padding: $spacing-md $spacing-lg;
-  border: 1rpx solid rgba(232, 168, 56, 0.2);
+.consumptionNo {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+  display: block;
 }
 
-.resetText {
-  font-size: $font-size-sm;
-  color: #C88600;
-  line-height: $line-height-normal;
+.consumptionRight {
+  text-align: right;
+}
+
+.consumptionQuantity {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-success;
+  display: block;
+}
+
+.consumptionAmount {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+  display: block;
 }

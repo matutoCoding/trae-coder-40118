@@ -8,19 +8,25 @@ import EmptyState from '@/components/EmptyState'
 import styles from './index.module.scss'
 
 const ConsumptionPage: React.FC = () => {
-  const { outboundRecords, quotas } = useGrainStore()
+  const { outboundRecords, getActiveQuotas } = useGrainStore()
   const params = Taro.getCurrentInstance().router?.params
   const merchantId = params?.merchantId || ''
 
+  const activeQuotas = useMemo(() => getActiveQuotas(), [getActiveQuotas])
   const merchantQuota = useMemo(() => {
-    return quotas.find((q) => q.merchantId === merchantId && (q.status === 'active' || q.status === 'exhausted'))
-  }, [quotas, merchantId])
+    return activeQuotas.find((q) => q.merchantId === merchantId && (q.status === 'active' || q.status === 'exhausted'))
+  }, [activeQuotas, merchantId])
 
   const merchantRecords = useMemo(() => {
     return outboundRecords
       .filter((r) => r.merchantId === merchantId)
       .sort((a, b) => new Date(b.outboundDate).getTime() - new Date(a.outboundDate).getTime())
   }, [outboundRecords, merchantId])
+
+  const base = merchantQuota?.baseQuota || 0
+  const used = merchantQuota?.used || 0
+  const approved = merchantQuota?.approved || 0
+  const remaining = base + approved - used
 
   return (
     <View className={styles.container}>
@@ -29,15 +35,15 @@ const ConsumptionPage: React.FC = () => {
           <Text className={styles.merchantName}>{merchantQuota.merchantName}</Text>
           <View className={styles.merchantStats}>
             <View className={styles.merchantStatItem}>
-              <Text className={styles.merchantStatValue}>{merchantQuota.totalQuota}</Text>
+              <Text className={styles.merchantStatValue}>{base}{approved > 0 ? `(+${approved})` : ''}</Text>
               <Text className={styles.merchantStatLabel}>总额度(吨)</Text>
             </View>
             <View className={styles.merchantStatItem}>
-              <Text className={styles.merchantStatValue}>{merchantQuota.usedQuota}</Text>
+              <Text className={styles.merchantStatValue}>{used}</Text>
               <Text className={styles.merchantStatLabel}>已用(吨)</Text>
             </View>
             <View className={styles.merchantStatItem}>
-              <Text className={styles.merchantStatValue}>{merchantQuota.remainingQuota}</Text>
+              <Text className={styles.merchantStatValue}>{remaining}</Text>
               <Text className={styles.merchantStatLabel}>剩余(吨)</Text>
             </View>
           </View>

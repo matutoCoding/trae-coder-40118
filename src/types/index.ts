@@ -39,9 +39,9 @@ export interface MerchantQuota {
   merchantName: string
   quarter: string
   year: number
-  totalQuota: number
-  usedQuota: number
-  remainingQuota: number
+  baseQuota: number
+  used: number
+  approved?: number
   unit: string
   status: 'active' | 'exhausted' | 'expired'
 }

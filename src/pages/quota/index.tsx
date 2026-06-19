@@ -3,9 +3,9 @@ import { View, Text, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import classnames from 'classnames'
 import { useGrainStore } from '@/store'
-import { getQuotaStatusText, getQuarterLabel, getCurrentQuarter } from '@/utils/helpers'
+import { getQuarterLabel, getCurrentQuarter } from '@/utils/helpers'
 import QuotaBar from '@/components/QuotaBar'
-import StatusTag from '@/components/StatusTag'
+import EmptyState from '@/components/EmptyState'
 import styles from './index.module.scss'
 
 const TABS = [
@@ -14,42 +14,77 @@ const TABS = [
 ]
 
 const QuotaPage: React.FC = () => {
-  const { quotas, outboundRecords } = useGrainStore()
+  const { getActiveQuotas, outboundRecords, applyQuota } = useGrainStore()
   const [activeTab, setActiveTab] = useState('overview')
+  const [selectedMerchantId, setSelectedMerchantId] = useState<string | null>(null)
 
-  const { quarter, year } = getCurrentQuarter()
+  const quotas = useMemo(() => getActiveQuotas(), [getActiveQuotas])
+  const { year, quarter } = getCurrentQuarter()
+  const quarterLabel = `${year}年${getQuarterLabel(quarter)}额度`
 
-  const currentQuotas = useMemo(() => {
-    return quotas.filter((q) => q.quarter === quarter && q.year === year)
-  }, [quotas, quarter, year])
+  const totalBase = useMemo(() => quotas.reduce((sum, q) => sum + q.baseQuota, 0), [quotas])
+  const totalUsed = useMemo(() => quotas.reduce((sum, q) => sum + q.used, 0), [quotas])
+  const totalApply = useMemo(() => quotas.reduce((sum, q) => sum + (q.approved || 0), 0), [quotas])
+  const totalRemaining = totalBase + totalApply - totalUsed
 
-  const totalQuota = useMemo(() => currentQuotas.reduce((s, q) => s + q.totalQuota, 0), [currentQuotas])
-  const totalUsed = useMemo(() => currentQuotas.reduce((s, q) => s + q.usedQuota, 0), [currentQuotas])
-  const totalRemaining = useMemo(() => currentQuotas.reduce((s, q) => s + q.remainingQuota, 0), [currentQuotas])
+  const filteredConsumption = useMemo(() => {
+    const sorted = [...outboundRecords].sort(
+      (a, b) => new Date(b.outboundDate).getTime() - new Date(a.outboundDate).getTime()
+    )
+    if (selectedMerchantId) {
+      return sorted.filter((r) => r.merchantId === selectedMerchantId)
+    }
+    return sorted
+  }, [outboundRecords, selectedMerchantId])
 
-  const consumptionRecords = useMemo(() => {
-    return outboundRecords
-      .filter((r) => r.status === 'completed')
-      .sort((a, b) => new Date(b.outboundDate).getTime() - new Date(a.outboundDate).getTime())
-      .slice(0, 10)
-  }, [outboundRecords])
-
-  const handleApply = (merchantId: string, merchantName: string) => {
-    Taro.navigateTo({ url: `/pages/quotaApply/index?merchantId=${merchantId}&merchantName=${merchantName}` })
+  const handleApply = (quota) => {
+    Taro.navigateTo({
+      url: `/pages/quotaApply/index?merchantId=${quota.merchantId}&merchantName=${encodeURIComponent(quota.merchantName)}`
+    })
   }
 
-  const handleViewConsumption = (merchantId: string) => {
-    Taro.navigateTo({ url: `/pages/consumption/index?merchantId=${merchantId}` })
+  const handleViewConsumption = (quota) => {
+    setSelectedMerchantId(quota.merchantId)
+    setActiveTab('consumption')
   }
 
   return (
     <View className={styles.container}>
+      <View className={styles.header}>
+        <Text className={styles.headerTitle}>{quarterLabel}</Text>
+        <View className={styles.quotaHeaderStats}>
+          <View className={styles.headerStatItem}>
+            <Text className={styles.headerStatValue}>{totalBase.toFixed(0)}<Text style={{ fontSize: '22rpx', color: '#8A8A8A' }}>吨</Text></Text>
+            <Text className={styles.headerStatLabel}>当季总额度</Text>
+          </View>
+          <View className={styles.headerStatItem}>
+            <Text className={styles.headerStatValue}>{totalUsed.toFixed(0)}<Text style={{ fontSize: '22rpx', color: '#8A8A8A' }}>吨</Text></Text>
+            <Text className={styles.headerStatLabel}>已使用</Text>
+          </View>
+          <View className={styles.headerStatItem}>
+            <Text className={classnames(styles.headerStatValue, totalRemaining < 0 && styles.headerStatValueDanger)}>
+              {totalRemaining.toFixed(0)}<Text style={{ fontSize: '22rpx', color: '#8A8A8A' }}>吨</Text>
+            </Text>
+            <Text className={styles.headerStatLabel}>剩余可用</Text>
+          </View>
+          {totalApply > 0 && (
+            <View className={styles.headerStatItem}>
+              <Text className={styles.headerStatValue} style={{ color: '#2D7D46' }}>+{totalApply.toFixed(0)}<Text style={{ fontSize: '22rpx', color: '#8A8A8A' }}>吨</Text></Text>
+              <Text className={styles.headerStatLabel}>已批追加</Text>
+            </View>
+          )}
+        </View>
+      </View>
+
       <View className={styles.tabs}>
         {TABS.map((tab) => (
           <View
             key={tab.value}
             className={classnames(styles.tab, activeTab === tab.value && styles.tabActive)}
-            onClick={() => setActiveTab(tab.value)}
+            onClick={() => {
+              setActiveTab(tab.value)
+              if (tab.value === 'overview') setSelectedMerchantId(null)
+            }}
           >
             <Text className={styles.tabText}>{tab.label}</Text>
             {activeTab === tab.value && <View className={styles.tabLine} />}
@@ -57,100 +92,102 @@ const QuotaPage: React.FC = () => {
         ))}
       </View>
 
-      <ScrollView scrollY style={{ height: 'calc(100vh - 120rpx)' }}>
-        <View className={styles.summaryCard}>
-          <View className={styles.summaryRow}>
-            <View className={styles.summaryItem}>
-              <View style={{ display: 'flex', alignItems: 'baseline' }}>
-                <Text className={styles.summaryValue}>{totalQuota}</Text>
-                <Text className={styles.summaryUnit}>吨</Text>
-              </View>
-              <Text className={styles.summaryLabel}>本季总额度</Text>
-            </View>
-            <View className={styles.summaryItem}>
-              <View style={{ display: 'flex', alignItems: 'baseline' }}>
-                <Text className={styles.summaryValue}>{totalUsed}</Text>
-                <Text className={styles.summaryUnit}>吨</Text>
-              </View>
-              <Text className={styles.summaryLabel}>已使用</Text>
-            </View>
-            <View className={styles.summaryItem}>
-              <View style={{ display: 'flex', alignItems: 'baseline' }}>
-                <Text className={styles.summaryValue}>{totalRemaining}</Text>
-                <Text className={styles.summaryUnit}>吨</Text>
-              </View>
-              <Text className={styles.summaryLabel}>剩余额度</Text>
-            </View>
-          </View>
-        </View>
-
+      <ScrollView scrollY className={styles.list} style={{ height: 'calc(100vh - 380rpx)' }}>
         {activeTab === 'overview' ? (
-          <View className={styles.content}>
-            {currentQuotas.map((quota) => (
-              <View key={quota.id} className={styles.quotaCard}>
-                <View className={styles.quotaHeader}>
-                  <View>
-                    <Text className={styles.merchantName}>{quota.merchantName}</Text>
-                    <Text className={styles.quotaQuarter}>
-                      {quota.year}年{getQuarterLabel(quota.quarter)}
-                    </Text>
-                  </View>
-                  <StatusTag status={quota.status} text={getQuotaStatusText(quota.status)} size='small' />
-                </View>
-                <QuotaBar used={quota.usedQuota} total={quota.totalQuota} />
-                <View style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24rpx', gap: '16rpx' }}>
-                  {quota.status === 'exhausted' && (
-                    <View
-                      className={classnames(styles.quotaAction, styles.quotaActionApply)}
-                      onClick={() => handleApply(quota.merchantId, quota.merchantName)}
-                    >
-                      <Text style={{ color: '#fff', fontSize: '24rpx', fontWeight: 500, whiteSpace: 'nowrap' }}>申请额度</Text>
+          <View>
+            {quotas.length > 0 ? (
+              quotas.map((quota) => (
+                <View key={quota.id} className={styles.quotaCard}>
+                  <View className={styles.quotaCardHeader}>
+                    <View className={styles.quotaMerchantInfo}>
+                      <Text className={styles.quotaMerchantName}>{quota.merchantName}</Text>
+                      <Text className={styles.quotaMerchantId}>{quota.merchantId}</Text>
                     </View>
-                  )}
-                  <View
-                    className={classnames(styles.quotaAction, styles.quotaActionView)}
-                    onClick={() => handleViewConsumption(quota.merchantId)}
-                  >
-                    <Text style={{ color: '#2D7D46', fontSize: '24rpx', fontWeight: 500, whiteSpace: 'nowrap' }}>查看明细</Text>
+                    <View
+                      className={classnames(
+                        styles.quotaStatus,
+                        quota.used / (quota.baseQuota + (quota.approved || 0)) >= 1 && styles.quotaStatusExhausted,
+                        quota.used / (quota.baseQuota + (quota.approved || 0)) >= 0.8 &&
+                          quota.used / (quota.baseQuota + (quota.approved || 0)) < 1 &&
+                          styles.quotaStatusWarning
+                      )}
+                    >
+                      <Text className={styles.quotaStatusText}>
+                        {quota.used / (quota.baseQuota + (quota.approved || 0)) >= 1
+                          ? '额度用尽'
+                          : quota.used / (quota.baseQuota + (quota.approved || 0)) >= 0.8
+                          ? '即将用尽'
+                          : '正常'}
+                      </Text>
+                    </View>
+                  </View>
+                  <QuotaBar
+                    used={quota.used}
+                    base={quota.baseQuota}
+                    approved={quota.approved}
+                  />
+                  <View className={styles.quotaActions}>
+                    <View
+                      className={classnames(
+                        styles.quotaActionBtn,
+                        styles.quotaActionBtnPrimary
+                      )}
+                      onClick={() => handleApply(quota)}
+                    >
+                      <Text className={styles.quotaActionBtnText}>申请额度</Text>
+                    </View>
+                    <View
+                      className={classnames(
+                        styles.quotaActionBtn,
+                        styles.quotaActionBtnDefault
+                      )}
+                      onClick={() => handleViewConsumption(quota)}
+                    >
+                      <Text className={styles.quotaActionBtnTextSecondary}>消费明细</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            ))}
-
-            <View className={styles.resetNotice}>
-              <Text className={styles.resetText}>
-                💡 额度规则说明：每季度初额度按规则重置，不累加上季未用额度。额度用尽后需重新申请，审批通过后方可继续出库。
-              </Text>
-            </View>
+              ))
+            ) : (
+              <EmptyState message='暂无额度数据，季度重置时将自动生成' />
+            )}
           </View>
         ) : (
-          <View className={styles.content}>
-            {consumptionRecords.map((record) => (
-              <View key={record.id} className={styles.consumptionCard}>
-                <View className={styles.consumptionHeader}>
-                  <Text className={styles.consumptionMerchant}>{record.merchantName}</Text>
-                  <Text className={styles.consumptionDate}>{record.outboundDate}</Text>
-                </View>
-                <View className={styles.consumptionBody}>
-                  <View className={styles.consumptionInfo}>
-                    <Text className={styles.consumptionLabel}>品种</Text>
-                    <Text className={styles.consumptionValue}>{record.grainType}</Text>
-                  </View>
-                  <View className={styles.consumptionInfo}>
-                    <Text className={styles.consumptionLabel}>数量</Text>
-                    <Text className={styles.consumptionValue}>{record.quantity}{record.unit}</Text>
-                  </View>
-                  <View className={styles.consumptionInfo}>
-                    <Text className={styles.consumptionLabel}>批号</Text>
-                    <Text className={styles.consumptionValue}>{record.batchNo}</Text>
-                  </View>
-                  <View className={styles.consumptionInfo}>
-                    <Text className={styles.consumptionLabel}>单号</Text>
-                    <Text className={styles.consumptionValue}>{record.outboundNo}</Text>
-                  </View>
+          <View>
+            {selectedMerchantId && (
+              <View className={styles.merchantFilter}>
+                <Text className={styles.merchantFilterLabel}>当前筛选：</Text>
+                <Text className={styles.merchantFilterValue}>
+                  {quotas.find((q) => q.merchantId === selectedMerchantId)?.merchantName || selectedMerchantId}
+                </Text>
+                <View
+                  className={styles.merchantFilterClear}
+                  onClick={() => setSelectedMerchantId(null)}
+                >
+                  <Text className={styles.merchantFilterClearText}>清除</Text>
                 </View>
               </View>
-            ))}
+            )}
+            {filteredConsumption.length > 0 ? (
+              filteredConsumption.map((record) => (
+                <View
+                  key={record.id}
+                  className={styles.consumptionItem}
+                  onClick={() => Taro.navigateTo({ url: `/pages/outboundDetail/index?id=${record.id}` })}
+                >
+                  <View className={styles.consumptionLeft}>
+                    <Text className={styles.consumptionMerchant}>{record.merchantName}</Text>
+                    <Text className={styles.consumptionNo}>{record.outboundNo} · {record.outboundDate}</Text>
+                  </View>
+                  <View className={styles.consumptionRight}>
+                    <Text className={styles.consumptionQuantity}>-{record.quantity}{record.unit}</Text>
+                    <Text className={styles.consumptionAmount}>扣减额度 {record.quantity}{record.unit}</Text>
+                  </View>
+                </View>
+              ))
+            ) : (
+              <EmptyState message='暂无消费记录' />
+            )}
           </View>
         )}
       </ScrollView>

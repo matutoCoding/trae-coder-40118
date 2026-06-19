@@ -7,21 +7,29 @@ import classnames from 'classnames'
 import styles from './index.module.scss'
 
 const BatchDetailPage: React.FC = () => {
-  const { batches, outboundRecords, inspections } = useGrainStore()
+  const { batches, outboundRecords, inspections, getBatchWithStatus } = useGrainStore()
 
   const params = Taro.getCurrentInstance().router?.params
   const batchId = params?.id || ''
 
-  const batch = useMemo(() => batches.find((b) => b.id === batchId), [batches, batchId])
+  const rawBatch = useMemo(() => batches.find((b) => b.id === batchId), [batches, batchId])
+  const batch = useMemo(
+    () => (rawBatch ? getBatchWithStatus(rawBatch) : undefined),
+    [rawBatch, getBatchWithStatus]
+  )
 
   const relatedOutbound = useMemo(() => {
     if (!batch) return []
-    return outboundRecords.filter((r) => r.batchNo === batch.batchNo)
+    return outboundRecords
+      .filter((r) => r.batchNo === batch.batchNo)
+      .sort((a, b) => new Date(b.outboundDate).getTime() - new Date(a.outboundDate).getTime())
   }, [outboundRecords, batch])
 
   const relatedInspections = useMemo(() => {
     if (!batch) return []
-    return inspections.filter((i) => i.batchNo === batch.batchNo)
+    return inspections
+      .filter((i) => i.batchNo === batch.batchNo)
+      .sort((a, b) => new Date(b.inspectionDate).getTime() - new Date(a.inspectionDate).getTime())
   }, [inspections, batch])
 
   if (!batch) {
@@ -93,8 +101,26 @@ const BatchDetailPage: React.FC = () => {
             <Text className={styles.infoValue}>{batch.inboundDate}</Text>
           </View>
           <View className={styles.infoRow}>
-            <Text className={classnames(styles.infoLabel, batch.status === 'warning' || batch.status === 'expired' ? styles.expiryHighlight : '')}>保质到期</Text>
-            <Text className={classnames(styles.infoValue, batch.status === 'warning' || batch.status === 'expired' ? styles.expiryHighlight : '')}>{batch.expiryDate}</Text>
+            <Text className={styles.infoLabel}>临期预警日</Text>
+            <Text className={styles.infoValue}>{batch.warningDate || '到期前30天'}</Text>
+          </View>
+          <View className={styles.infoRow}>
+            <Text
+              className={classnames(
+                styles.infoLabel,
+                (batch.status === 'warning' || batch.status === 'expired') && styles.expiryHighlight
+              )}
+            >
+              保质到期
+            </Text>
+            <Text
+              className={classnames(
+                styles.infoValue,
+                (batch.status === 'warning' || batch.status === 'expired') && styles.expiryHighlight
+              )}
+            >
+              {batch.expiryDate}
+            </Text>
           </View>
         </View>
 
@@ -102,11 +128,17 @@ const BatchDetailPage: React.FC = () => {
           <Text className={styles.infoSectionTitle}>检验信息</Text>
           <View className={styles.infoRow}>
             <Text className={styles.infoLabel}>水分含量</Text>
-            <Text className={styles.infoValue}>{batch.moistureContent}%</Text>
+            <Text className={styles.infoValue}>
+              {batch.moistureContent}%
+              {batch.moistureContent > 14 && <Text style={{ color: '#D93025', marginLeft: '8rpx' }}>(超标)</Text>}
+            </Text>
           </View>
           <View className={styles.infoRow}>
             <Text className={styles.infoLabel}>杂质率</Text>
-            <Text className={styles.infoValue}>{batch.impurityRate}%</Text>
+            <Text className={styles.infoValue}>
+              {batch.impurityRate}%
+              {batch.impurityRate > 1.5 && <Text style={{ color: '#D93025', marginLeft: '8rpx' }}>(超标)</Text>}
+            </Text>
           </View>
           {batch.remark && (
             <View className={styles.infoRow}>
@@ -118,7 +150,7 @@ const BatchDetailPage: React.FC = () => {
 
         {relatedOutbound.length > 0 && (
           <View className={styles.timelineSection}>
-            <Text className={styles.timelineTitle}>出库记录</Text>
+            <Text className={styles.timelineTitle}>出库记录（{relatedOutbound.length}条）</Text>
             {relatedOutbound.map((record) => (
               <View key={record.id} className={styles.timelineItem}>
                 <View className={styles.timelineDot} />
@@ -127,7 +159,9 @@ const BatchDetailPage: React.FC = () => {
                   <Text className={styles.timelineEvent}>
                     出库 {record.quantity}{record.unit} → {record.merchantName}
                   </Text>
-                  <Text className={styles.timelineDate}>{record.outboundDate}</Text>
+                  <Text className={styles.timelineDate}>
+                    {record.outboundNo} · {record.outboundDate}
+                  </Text>
                 </View>
               </View>
             ))}
@@ -136,19 +170,33 @@ const BatchDetailPage: React.FC = () => {
 
         {relatedInspections.length > 0 && (
           <View className={styles.timelineSection}>
-            <Text className={styles.timelineTitle}>检验记录</Text>
+            <Text className={styles.timelineTitle}>检验记录（{relatedInspections.length}条）</Text>
             {relatedInspections.map((insp) => (
               <View key={insp.id} className={styles.timelineItem}>
-                <View className={styles.timelineDot} />
+                <View
+                  className={classnames(
+                    styles.timelineDot,
+                    insp.result === 'fail' && styles.timelineDotFail
+                  )}
+                />
                 {relatedInspections.indexOf(insp) < relatedInspections.length - 1 && <View className={styles.timelineLine} />}
                 <View className={styles.timelineContent}>
                   <Text className={styles.timelineEvent}>
                     {insp.inspectionType === 'full' ? '综合检验' : insp.inspectionType === 'moisture' ? '水分检测' : '杂质检测'}
-                    {' - '}{insp.result === 'pass' ? '合格' : '不合格'}
+                    {' - '}
+                    <Text style={{ color: insp.result === 'pass' ? '#2D7D46' : '#D93025' }}>
+                      {insp.result === 'pass' ? '合格' : '不合格'}
+                    </Text>
+                    {insp.result === 'fail' && ` (水分${insp.moistureContent}%/杂质${insp.impurityRate}%)`}
                   </Text>
                   <Text className={styles.timelineDate}>
-                    {insp.inspector} · {insp.inspectionDate}
+                    {insp.inspector} · {insp.standard} · {insp.inspectionDate}
                   </Text>
+                  {insp.remark && (
+                    <Text style={{ fontSize: '24rpx', color: '#5A5A5A', marginTop: '4rpx' }}>
+                      备注：{insp.remark}
+                    </Text>
+                  )}
                 </View>
               </View>
             ))}

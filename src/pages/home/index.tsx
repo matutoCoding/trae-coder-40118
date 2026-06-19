@@ -1,162 +1,199 @@
 import React, { useMemo } from 'react'
-import { View, Text } from '@tarojs/components'
+import { View, Text, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useGrainStore } from '@/store'
-import { getDaysLeft, getOutboundStatusText } from '@/utils/helpers'
-import StatusTag from '@/components/StatusTag'
+import { getDaysLeft } from '@/utils/helpers'
+import StatCard from '@/components/StatCard'
+import classnames from 'classnames'
 import styles from './index.module.scss'
 
 const HomePage: React.FC = () => {
-  const { batches, outboundRecords, quotas } = useGrainStore()
+  const { getBatchesWithComputedStatus, getActiveQuotas, outboundRecords } = useGrainStore()
 
-  const stats = useMemo(() => {
-    const totalStock = batches.reduce((sum, b) => sum + b.remainingQuantity, 0)
-    const warningCount = batches.filter((b) => b.status === 'warning').length
-    const expiredCount = batches.filter((b) => b.status === 'expired' || b.status === 'locked').length
-    const activeMerchants = quotas.filter((q) => q.status === 'active').length
-    return { totalStock, warningCount, expiredCount, activeMerchants }
-  }, [batches, quotas])
+  const allBatches = useMemo(() => getBatchesWithComputedStatus(), [getBatchesWithComputedStatus])
+  const quotas = useMemo(() => getActiveQuotas(), [getActiveQuotas])
 
-  const warningBatches = useMemo(() => {
-    return batches
-      .filter((b) => b.status === 'warning' || b.status === 'expired' || b.status === 'locked')
-      .map((b) => ({ ...b, daysLeft: getDaysLeft(b.expiryDate) }))
-      .sort((a, b) => a.daysLeft - b.daysLeft)
-      .slice(0, 3)
-  }, [batches])
+  const totalQuantity = useMemo(
+    () => allBatches.reduce((sum, b) => sum + b.remainingQuantity, 0),
+    [allBatches]
+  )
+  const totalValue = totalQuantity * 3.5
 
-  const recentOutbound = useMemo(() => {
-    return outboundRecords
-      .filter((r) => r.status === 'completed' || r.status === 'approved')
-      .sort((a, b) => new Date(b.outboundDate).getTime() - new Date(a.outboundDate).getTime())
-      .slice(0, 4)
-  }, [outboundRecords])
+  const warningCount = useMemo(
+    () => allBatches.filter((b) => b.status === 'warning').length,
+    [allBatches]
+  )
+  const expiredCount = useMemo(
+    () => allBatches.filter((b) => b.status === 'expired' || b.status === 'locked').length,
+    [allBatches]
+  )
 
-  const handleNavigate = (url: string) => {
-    Taro.navigateTo({ url })
-  }
+  const urgentBatches = useMemo(
+    () =>
+      allBatches
+        .filter((b) => b.status === 'warning' || b.status === 'expired' || b.status === 'locked')
+        .map((b) => ({ ...b, daysLeft: getDaysLeft(b.expiryDate) }))
+        .sort((a, b) => a.daysLeft - b.daysLeft)
+        .slice(0, 5),
+    [allBatches]
+  )
 
-  const handleSwitchTab = (url: string) => {
-    Taro.switchTab({ url })
-  }
+  const recentOutbound = useMemo(
+    () => [...outboundRecords].sort((a, b) => new Date(b.outboundDate).getTime() - new Date(a.outboundDate).getTime()).slice(0, 5),
+    [outboundRecords]
+  )
+
+  const totalQuotaUsed = useMemo(() => quotas.reduce((sum, q) => sum + q.used, 0), [quotas])
+  const totalQuotaBase = useMemo(() => quotas.reduce((sum, q) => sum + q.baseQuota + (q.approved || 0), 0), [quotas])
+  const quotaUsagePercent = totalQuotaBase > 0 ? Math.min((totalQuotaUsed / totalQuotaBase) * 100, 100) : 0
 
   return (
-    <View className={styles.container}>
-      <View className={styles.heroSection}>
-        <Text className={styles.heroTitle}>粮库溯源管理</Text>
-        <Text className={styles.heroSubtitle}>智能仓储 · 安全溯源 · 高效管控</Text>
-      </View>
-
-      <View className={styles.statsGrid}>
-        <View className={styles.statItem}>
-          <View className={styles.statRow}>
-            <Text className={styles.statValue}>{stats.totalStock}</Text>
-            <Text className={styles.statUnit}>吨</Text>
-          </View>
-          <Text className={styles.statLabel}>库存总量</Text>
-        </View>
-        <View className={styles.statItem}>
-          <View className={styles.statRow}>
-            <Text className={styles.statValue}>{stats.warningCount}</Text>
-          </View>
-          <Text className={styles.statLabel}>临期批次</Text>
-        </View>
-        <View className={styles.statItem}>
-          <View className={styles.statRow}>
-            <Text className={styles.statValue}>{stats.expiredCount}</Text>
-          </View>
-          <Text className={styles.statLabel}>超期/锁定</Text>
-        </View>
-        <View className={styles.statItem}>
-          <View className={styles.statRow}>
-            <Text className={styles.statValue}>{stats.activeMerchants}</Text>
-          </View>
-          <Text className={styles.statLabel}>活跃商户</Text>
-        </View>
-      </View>
-
-      <View className={styles.quickActions}>
-        <View className={styles.actionItem} onClick={() => handleNavigate('/pages/inbound/index')}>
-          <Text className={styles.actionIcon}>📥</Text>
-          <Text className={styles.actionText}>入库登记</Text>
-        </View>
-        <View className={styles.actionItem} onClick={() => handleSwitchTab('/pages/outbound/index')}>
-          <Text className={styles.actionIcon}>📤</Text>
-          <Text className={styles.actionText}>出库操作</Text>
-        </View>
-        <View className={styles.actionItem} onClick={() => handleNavigate('/pages/warning/index')}>
-          <Text className={styles.actionIcon}>⚠️</Text>
-          <Text className={styles.actionText}>临期预警</Text>
-        </View>
-        <View className={styles.actionItem} onClick={() => handleNavigate('/pages/inspection/index')}>
-          <Text className={styles.actionIcon}>🔬</Text>
-          <Text className={styles.actionText}>检验记录</Text>
-        </View>
-      </View>
-
-      {(stats.warningCount > 0 || stats.expiredCount > 0) && (
-        <View className={styles.section}>
-          <View className={styles.sectionHeader}>
-            <Text className={styles.sectionTitle}>效期预警</Text>
-            <Text className={styles.sectionMore} onClick={() => handleNavigate('/pages/warning/index')}>
-              查看全部 ›
-            </Text>
-          </View>
-          <View className={styles.warningCard}>
-            <View className={styles.warningHeader}>
-              <View className={`${styles.warningDot} ${stats.expiredCount > 0 ? styles.dangerDot : ''}`} />
-              <Text className={styles.warningTitle}>
-                {stats.expiredCount > 0 ? '超期锁定' : '临期提醒'}
-              </Text>
-              <Text className={styles.warningCount}>
-                {stats.warningCount + stats.expiredCount} 批次需关注
-              </Text>
-            </View>
-            {warningBatches.map((item) => (
-              <View key={item.id} className={styles.warningItem}>
-                <View>
-                  <Text className={styles.warningBatchNo}>{item.batchNo}</Text>
-                  <Text className={styles.warningInfo}>
-                    {item.grainType} · {item.warehouseNo} · 剩余{item.remainingQuantity}{item.unit}
-                  </Text>
-                </View>
-                <Text
-                  className={`${styles.warningDays} ${item.daysLeft <= 0 ? styles.warningDaysDanger : styles.warningDaysWarning}`}
-                >
-                  {item.daysLeft > 0 ? `剩${item.daysLeft}天` : '已超期'}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
-
-      <View className={styles.section}>
-        <View className={styles.sectionHeader}>
-          <Text className={styles.sectionTitle}>最近出库</Text>
-          <Text className={styles.sectionMore} onClick={() => handleSwitchTab('/pages/outbound/index')}>
-            查看全部 ›
+    <ScrollView scrollY style={{ height: '100vh' }}>
+      <View className={styles.container}>
+        <View className={styles.header}>
+          <Text className={styles.headerTitle}>粮库出入库溯源系统</Text>
+          <Text className={styles.headerDate}>
+            {new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
           </Text>
         </View>
-        <View className={styles.recentCard}>
-          {recentOutbound.map((item) => (
-            <View key={item.id} className={styles.recentItem}>
-              <View className={`${styles.recentIcon} ${styles.recentIconOut}`}>📤</View>
-              <View className={styles.recentContent}>
-                <Text className={styles.recentTitle}>
-                  {item.merchantName} · {item.grainType}{item.quantity}{item.unit}
-                </Text>
-                <Text className={styles.recentDesc}>{item.outboundNo}</Text>
-              </View>
-              <View>
-                <StatusTag status={item.status} text={getOutboundStatusText(item.status)} size='small' />
-                <Text className={styles.recentTime}>{item.outboundDate}</Text>
-              </View>
+
+        <View className={styles.statsGrid}>
+          <StatCard
+            title='总库存'
+            value={`${totalQuantity.toFixed(0)}吨`}
+            trend={`价值 ¥${totalValue.toFixed(0)}万`}
+            theme='primary'
+          />
+          <StatCard
+            title='批次总数'
+            value={allBatches.length.toString()}
+            trend={`正常 ${allBatches.length - warningCount - expiredCount} 批`}
+            theme='default'
+          />
+          <StatCard
+            title='临期预警'
+            value={warningCount.toString()}
+            trend={warningCount > 0 ? '需优先出库' : '状态良好'}
+            theme='warning'
+            onClick={() => Taro.switchTab({ url: '/pages/outbound/index' })}
+          />
+          <StatCard
+            title='超期锁定'
+            value={expiredCount.toString()}
+            trend={expiredCount > 0 ? '禁止出库' : '无异常'}
+            theme='danger'
+            onClick={() => Taro.navigateTo({ url: '/pages/warning/index' })}
+          />
+        </View>
+
+        <View className={styles.quotaOverview}>
+          <View className={styles.sectionHeader}>
+            <Text className={styles.sectionTitle}>当季额度总览</Text>
+            <Text
+              className={styles.sectionAction}
+              onClick={() => Taro.switchTab({ url: '/pages/quota/index' })}
+            >
+              查看详情 →
+            </Text>
+          </View>
+          <View className={styles.quotaStats}>
+            <View className={styles.statRow}>
+              <Text className={styles.quotaStatValue}>
+                {totalQuotaUsed.toFixed(0)}
+                <Text style={{ fontSize: '24rpx', color: '#8A8A8A' }}>/{totalQuotaBase.toFixed(0)}吨</Text>
+              </Text>
+              <Text className={styles.quotaStatLabel}>全粮商已使用</Text>
             </View>
-          ))}
+            <View className={styles.quotaProgressWrap}>
+              <View className={styles.quotaProgress}>
+                <View
+                  className={classnames(
+                    styles.quotaProgressBar,
+                    quotaUsagePercent > 80 && styles.quotaProgressBarDanger,
+                    quotaUsagePercent >= 50 && quotaUsagePercent <= 80 && styles.quotaProgressBarWarn
+                  )}
+                  style={{ width: `${quotaUsagePercent}%` }}
+                />
+              </View>
+              <Text className={styles.quotaPercent}>{quotaUsagePercent.toFixed(0)}%</Text>
+            </View>
+          </View>
+        </View>
+
+        <View className={styles.urgentSection}>
+          <View className={styles.sectionHeader}>
+            <Text className={styles.sectionTitle}>效期紧急提醒</Text>
+          </View>
+          {urgentBatches.length > 0 ? (
+            urgentBatches.map((batch) => (
+              <View
+                key={batch.id}
+                className={classnames(
+                  styles.urgentCard,
+                  batch.status === 'warning' && styles.urgentCardWarning,
+                  batch.status === 'expired' && styles.urgentCardDanger,
+                  batch.status === 'locked' && styles.urgentCardDanger
+                )}
+                onClick={() => Taro.navigateTo({ url: `/pages/batchDetail/index?id=${batch.id}` })}
+              >
+                <View className={styles.urgentLeft}>
+                  <Text className={styles.urgentBatchNo}>{batch.batchNo}</Text>
+                  <Text className={styles.urgentBatchInfo}>
+                    {batch.grainType} · {batch.warehouseNo} · {batch.remainingQuantity}{batch.unit}
+                  </Text>
+                </View>
+                <View className={styles.urgentRight}>
+                  <Text
+                    className={classnames(
+                      styles.urgentDays,
+                      batch.status === 'warning' && styles.urgentDaysWarn,
+                      (batch.status === 'expired' || batch.status === 'locked') && styles.urgentDaysDanger
+                    )}
+                  >
+                    {batch.daysLeft > 0 ? `剩${batch.daysLeft}天` : '已超期'}
+                  </Text>
+                  <Text className={styles.urgentDate}>到期 {batch.expiryDate}</Text>
+                </View>
+              </View>
+            ))
+          ) : (
+            <View className={styles.emptyTip}>
+              <Text className={styles.emptyTipText}>所有批次状态良好 👍</Text>
+            </View>
+          )}
+        </View>
+
+        <View className={styles.recentSection}>
+          <View className={styles.sectionHeader}>
+            <Text className={styles.sectionTitle}>最近出库</Text>
+            <Text
+              className={styles.sectionAction}
+              onClick={() => Taro.switchTab({ url: '/pages/outbound/index' })}
+            >
+              出库记录 →
+            </Text>
+          </View>
+          {recentOutbound.length > 0 ? (
+            recentOutbound.map((record) => (
+              <View key={record.id} className={styles.recentItem}>
+                <View className={styles.recentLeft}>
+                  <Text className={styles.recentMerchant}>{record.merchantName}</Text>
+                  <Text className={styles.recentNo}>{record.outboundNo}</Text>
+                </View>
+                <View className={styles.recentRight}>
+                  <Text className={styles.recentQuantity}>-{record.quantity}{record.unit}</Text>
+                  <Text className={styles.recentDate}>{record.outboundDate}</Text>
+                </View>
+              </View>
+            ))
+          ) : (
+            <View className={styles.emptyTip}>
+              <Text className={styles.emptyTipText}>暂无出库记录</Text>
+            </View>
+          )}
         </View>
       </View>
-    </View>
+    </ScrollView>
   )
 }
 

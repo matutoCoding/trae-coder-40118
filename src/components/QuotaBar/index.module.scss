@@ -1,4 +1,4 @@
-@use '@/styles/variables.scss' as *;
+@import '@/styles/variables.scss';
 
 .container {
   width: 100%;
@@ -8,12 +8,29 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: $spacing-xs;
+  margin-bottom: $spacing-sm;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
 }
 
 .label {
   font-size: $font-size-sm;
   color: $color-text-secondary;
+}
+
+.approvedTag {
+  padding: 2rpx $spacing-sm;
+  background-color: rgba(45, 125, 70, 0.1);
+  border-radius: $radius-round;
+}
+
+.approvedText {
+  font-size: 20rpx;
+  color: #2D7D46;
 }
 
 .value {
@@ -25,40 +42,56 @@
 .track {
   width: 100%;
   height: 16rpx;
-  background-color: #E8E5DE;
+  background-color: #F0F4FA;
   border-radius: $radius-round;
   overflow: hidden;
+  position: relative;
+}
+
+.approvedSegment {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: transparent;
+  border-right: 2rpx dashed #B0B0B0;
+  z-index: 1;
 }
 
 .fill {
   height: 100%;
   border-radius: $radius-round;
-  transition: width $transition-base;
+  transition: width 0.4s ease;
+  position: relative;
+  z-index: 2;
 }
 
 .normal {
-  background: linear-gradient(135deg, #2D7D46 0%, #3D9D56 100%);
+  background: linear-gradient(90deg, #2D7D46 0%, #5CB85C 100%);
 }
 
 .warningStyle {
-  background: linear-gradient(135deg, #C88600 0%, #E8A838 100%);
+  background: linear-gradient(90deg, #FFB800 0%, #FF8800 100%);
 }
 
 .exhausted {
-  background: linear-gradient(135deg, #D93025 0%, #E84C3D 100%);
+  background: linear-gradient(90deg, #FF5252 0%, #D93025 100%);
 }
 
 .percentage {
-  font-size: $font-size-xs;
-  color: $color-text-tertiary;
-  margin-top: 8rpx;
   display: block;
+  text-align: right;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-top: $spacing-xs;
 }
 
 .warn {
-  color: #C88600;
+  color: #B26A00;
+  font-weight: $font-weight-medium;
 }
 
 .danger {
   color: #D93025;
+  font-weight: $font-weight-semibold;
 }
