@@ -140,6 +140,24 @@
   background-color: #D93025;
 }
 
+.timelineDotWarning {
+  background-color: #FFB800;
+}
+
+.timelineDotPending {
+  background-color: #165DFF;
+}
+
+.timelineDotReview {
+  background-color: #7B61FF;
+}
+
+.timelineActionText {
+  font-size: 22rpx;
+  color: #165DFF;
+  margin-top: 4rpx;
+}
+
 .timelineContent {
   flex: 1;
 }

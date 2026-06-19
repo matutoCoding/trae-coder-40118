@@ -302,3 +302,143 @@
   color: $color-text-primary;
   font-weight: $font-weight-medium;
 }
+
+.pendingCard {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  border-left: 8rpx solid #FFB800;
+}
+
+.pendingMerchantName {
+  font-weight: $font-weight-semibold;
+}
+
+.pendingQuantity {
+  color: #2D7D46;
+  font-weight: $font-weight-semibold;
+}
+
+.pendingPlanList {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.pendingPlanItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-xs 0;
+}
+
+.pendingBatchNo {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.pendingDeduct {
+  font-size: $font-size-sm;
+  color: #2D7D46;
+  font-weight: $font-weight-medium;
+}
+
+.riskHintList {
+  margin-top: $spacing-md;
+  padding: $spacing-sm $spacing-md;
+  background-color: rgba(217, 48, 37, 0.05);
+  border-radius: $radius-sm;
+  border: 1rpx solid rgba(217, 48, 37, 0.1);
+}
+
+.riskHintItem {
+  padding: $spacing-xs 0;
+}
+
+.riskHintText {
+  font-size: $font-size-sm;
+  color: #D93025;
+}
+
+.reviewRow {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-md;
+}
+
+.reviewInput {
+  flex: 1;
+  height: 72rpx;
+  background-color: $color-bg-page;
+  border: 1rpx solid $color-border;
+  border-radius: $radius-md;
+  padding: 0 $spacing-md;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.approveBtn {
+  flex: 1;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2D7D46 0%, #3D9D56 100%);
+  border-radius: $radius-md;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.approveBtnText {
+  font-size: $font-size-md;
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+}
+
+.rejectBtn {
+  flex: 1;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(217, 48, 37, 0.08);
+  border: 1rpx solid rgba(217, 48, 37, 0.2);
+  border-radius: $radius-md;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.rejectBtnText {
+  font-size: $font-size-md;
+  color: #D93025;
+  font-weight: $font-weight-medium;
+}
+
+.actualDeductList {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.actualDeductItem {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  padding: $spacing-xs 0;
+}
+
+.rejectRemark {
+  margin-top: $spacing-md;
+  padding: $spacing-sm $spacing-md;
+  background-color: rgba(217, 48, 37, 0.05);
+  border-radius: $radius-sm;
+  font-size: $font-size-sm;
+  color: #D93025;
+}

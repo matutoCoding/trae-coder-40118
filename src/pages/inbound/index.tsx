@@ -102,6 +102,13 @@ const InboundPage: React.FC = () => {
       }
 
       const created = addBatch(batch)
+
+      if (created.status === 'locked') {
+        Taro.showToast({ title: '该批次已过期，已自动锁定不可出库', icon: 'none', duration: 2500 })
+        setTimeout(() => Taro.navigateBack(), 2200)
+        return
+      }
+
       const daysLeft = getDaysLeft(created.expiryDate)
 
       const moisture = Number(form.moistureContent)
@@ -128,7 +135,6 @@ const InboundPage: React.FC = () => {
           remark: pass ? '入库验收合格' : `入库验收入${!moisturePass ? '水分超标' : ''}${!impurityPass ? '杂质超标' : ''}`
         }
         addInspection(inspection)
-        console.info('[Inbound] 已生成检验记录:', inspection)
       }
 
       let toastMsg = `入库成功：${batchNo}`
@@ -137,11 +143,9 @@ const InboundPage: React.FC = () => {
       } else if (created.status === 'expired') {
         toastMsg += '（已超期锁定）'
       }
-      console.info('[Inbound] 新增批次:', created)
       Taro.showToast({ title: toastMsg, icon: 'none', duration: 2000 })
       setTimeout(() => Taro.navigateBack(), 1800)
     } catch (e) {
-      console.error('[InboundPage] 入库异常', e)
       Taro.showToast({ title: '入库失败，请重试', icon: 'none' })
     } finally {
       setSubmitting(false)

@@ -39,7 +39,7 @@ const HomePage: React.FC = () => {
   )
 
   const recentOutbound = useMemo(
-    () => [...outboundRecords].sort((a, b) => new Date(b.outboundDate).getTime() - new Date(a.outboundDate).getTime()).slice(0, 5),
+    () => [...outboundRecords].filter((r) => r.status === 'completed').sort((a, b) => new Date(b.outboundDate).getTime() - new Date(a.outboundDate).getTime()).slice(0, 5),
     [outboundRecords]
   )
 

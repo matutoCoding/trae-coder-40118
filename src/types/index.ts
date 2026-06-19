@@ -17,6 +17,17 @@ export interface GrainBatch {
   remark: string
 }
 
+export interface PlannedDeduction {
+  batchId: string
+  batchNo: string
+  grainType: string
+  warehouseNo: string
+  inboundDate: string
+  expiryDate: string
+  deductQuantity: number
+  unit: string
+}
+
 export interface OutboundRecord {
   id: string
   outboundNo: string
@@ -31,6 +42,13 @@ export interface OutboundRecord {
   operator: string
   quotaId: string
   remark: string
+  plannedDeductions: PlannedDeduction[]
+  actualDeductions: PlannedDeduction[]
+  reviewDate: string
+  reviewer: string
+  reviewRemark: string
+  quotaOccupied: number
+  riskHints: string[]
 }
 
 export interface MerchantQuota {
@@ -84,4 +102,5 @@ export interface QuotaApplication {
   applyDate: string
   reviewDate: string
   reviewer: string
+  reviewRemark: string
 }

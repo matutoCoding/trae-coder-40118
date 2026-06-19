@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import { View, Text, ScrollView, Input, Picker } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import classnames from 'classnames'
@@ -10,15 +10,18 @@ import styles from './index.module.scss'
 
 const TABS = [
   { label: '办理出库', value: 'fifo' },
+  { label: '待审核', value: 'pending' },
   { label: '出库记录', value: 'records' }
 ]
 
 const OutboundPage: React.FC = () => {
-  const { merchants, getFifoBatches, outboundRecords, createOutbound, getMerchantQuota } = useGrainStore()
+  const { merchants, getFifoBatches, outboundRecords, createOutbound, reviewOutbound, getMerchantQuota } = useGrainStore()
   const [activeTab, setActiveTab] = useState('fifo')
   const [merchantIdx, setMerchantIdx] = useState<string>('')
   const [quantity, setQuantity] = useState<string>('')
   const [submitting, setSubmitting] = useState(false)
+  const [reviewRemarks, setReviewRemarks] = useState<Record<string, string>>({})
+  const [reviewing, setReviewing] = useState<Record<string, boolean>>({})
 
   const fifoBatches = useMemo(() => getFifoBatches().slice(0, 10), [getFifoBatches])
   const totalAvailable = useMemo(() => {
@@ -33,6 +36,12 @@ const OutboundPage: React.FC = () => {
     () => (selectedMerchant ? getMerchantQuota(selectedMerchant.merchantId) : undefined),
     [selectedMerchant, getMerchantQuota]
   )
+
+  const pendingRecords = useMemo(() => {
+    return outboundRecords
+      .filter((r) => r.status === 'pending')
+      .sort((a, b) => new Date(b.outboundDate).getTime() - new Date(a.outboundDate).getTime())
+  }, [outboundRecords])
 
   const sortedRecords = useMemo(() => {
     return [...outboundRecords].sort(
@@ -60,10 +69,10 @@ const OutboundPage: React.FC = () => {
         qty
       )
       if (result.success) {
-        Taro.showToast({ title: '出库成功', icon: 'success' })
+        Taro.showToast({ title: result.message, icon: 'success' })
         setQuantity('')
         setMerchantIdx('')
-        setTimeout(() => setActiveTab('records'), 800)
+        setTimeout(() => setActiveTab('pending'), 800)
       } else {
         Taro.showModal({
           title: result.needApply ? '额度不足' : '出库失败',
@@ -79,10 +88,22 @@ const OutboundPage: React.FC = () => {
         })
       }
     } catch (e) {
-      console.error('[OutboundPage] 出库异常', e)
       Taro.showToast({ title: '系统异常，请重试', icon: 'none' })
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleReview = async (recordId: string, approved: boolean) => {
+    const remark = reviewRemarks[recordId] || ''
+    setReviewing((prev) => ({ ...prev, [recordId]: true }))
+    try {
+      const result = await reviewOutbound(recordId, approved, '当前审批人', remark)
+      Taro.showToast({ title: result.message, icon: result.success ? 'success' : 'none' })
+    } catch {
+      Taro.showToast({ title: '审核异常，请重试', icon: 'none' })
+    } finally {
+      setReviewing((prev) => ({ ...prev, [recordId]: false }))
     }
   }
 
@@ -106,7 +127,7 @@ const OutboundPage: React.FC = () => {
       </View>
 
       <ScrollView scrollY style={{ height: 'calc(100vh - 120rpx)' }}>
-        {activeTab === 'fifo' ? (
+        {activeTab === 'fifo' && (
           <View className={styles.content}>
             <View className={styles.outboundForm}>
               <Text className={styles.sectionTitle}>出库办理</Text>
@@ -218,7 +239,89 @@ const OutboundPage: React.FC = () => {
               )}
             </View>
           </View>
-        ) : (
+        )}
+
+        {activeTab === 'pending' && (
+          <View className={styles.content}>
+            {pendingRecords.length > 0 ? (
+              pendingRecords.map((record) => (
+                <View key={record.id} className={styles.pendingCard}>
+                  <View className={styles.pendingCardHeader}>
+                    <Text className={styles.recordNo}>{record.outboundNo}</Text>
+                    <StatusTag status={record.status} text={getOutboundStatusText(record.status)} size='small' />
+                  </View>
+
+                  <View className={styles.recordBody}>
+                    <View className={styles.recordInfoItem}>
+                      <Text className={styles.recordInfoLabel}>商户</Text>
+                      <Text className={classnames(styles.recordInfoValue, styles.pendingMerchantName)}>{record.merchantName}</Text>
+                    </View>
+                    <View className={styles.recordInfoItem}>
+                      <Text className={styles.recordInfoLabel}>数量</Text>
+                      <Text className={classnames(styles.recordInfoValue, styles.pendingQuantity)}>{record.quantity}{record.unit}</Text>
+                    </View>
+                    <View className={styles.recordInfoItem}>
+                      <Text className={styles.recordInfoLabel}>占用额度</Text>
+                      <Text className={styles.recordInfoValue}>{record.quotaOccupied}{record.unit}</Text>
+                    </View>
+                    <View className={styles.recordInfoItem}>
+                      <Text className={styles.recordInfoLabel}>日期</Text>
+                      <Text className={styles.recordInfoValue}>{record.outboundDate}</Text>
+                    </View>
+                  </View>
+
+                  {record.plannedDeductions.length > 0 && (
+                    <View className={styles.pendingPlanList}>
+                      {record.plannedDeductions.map((plan) => (
+                        <View key={plan.batchId} className={styles.pendingPlanItem}>
+                          <Text className={styles.pendingBatchNo}>{plan.batchNo}</Text>
+                          <Text className={styles.pendingDeduct}>扣减 {plan.deductQuantity}{plan.unit}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {record.riskHints.length > 0 && (
+                    <View className={styles.riskHintList}>
+                      {record.riskHints.map((hint, idx) => (
+                        <View key={idx} className={styles.riskHintItem}>
+                          <Text className={styles.riskHintText}>⚠️ {hint}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  <View className={styles.reviewRow}>
+                    <Input
+                      className={styles.reviewInput}
+                      placeholder='审批备注（选填）'
+                      value={reviewRemarks[record.id] || ''}
+                      onInput={(e) => setReviewRemarks((prev) => ({ ...prev, [record.id]: e.detail.value }))}
+                    />
+                  </View>
+                  <View className={styles.reviewRow}>
+                    <View
+                      className={styles.approveBtn}
+                      onClick={reviewing[record.id] ? undefined : () => handleReview(record.id, true)}
+                    >
+                      <Text className={styles.approveBtnText}>{reviewing[record.id] ? '处理中...' : '通过'}</Text>
+                    </View>
+                    <View
+                      className={styles.rejectBtn}
+                      onClick={reviewing[record.id] ? undefined : () => handleReview(record.id, false)}
+                    >
+                      <Text className={styles.rejectBtnText}>驳回</Text>
+                    </View>
+                  </View>
+                </View>
+              ))
+            ) : (
+              <EmptyState message='暂无待审核记录' />
+            )}
+          </View>
+        )}
+
+        {activeTab === 'records' && (
           <View className={styles.content}>
             {sortedRecords.length > 0 ? (
               sortedRecords.map((record) => (
@@ -241,10 +344,6 @@ const OutboundPage: React.FC = () => {
                       <Text className={styles.recordInfoValue}>{record.merchantName}</Text>
                     </View>
                     <View className={styles.recordInfoItem}>
-                      <Text className={styles.recordInfoLabel}>品种</Text>
-                      <Text className={styles.recordInfoValue}>{record.grainType}</Text>
-                    </View>
-                    <View className={styles.recordInfoItem}>
                       <Text className={styles.recordInfoLabel}>数量</Text>
                       <Text className={styles.recordInfoValue}>{record.quantity}{record.unit}</Text>
                     </View>
@@ -253,6 +352,22 @@ const OutboundPage: React.FC = () => {
                       <Text className={styles.recordInfoValue}>{record.outboundDate}</Text>
                     </View>
                   </View>
+
+                  {record.status === 'completed' && record.actualDeductions.length > 0 && (
+                    <View className={styles.actualDeductList}>
+                      {record.actualDeductions.map((d) => (
+                        <View key={d.batchId} className={styles.actualDeductItem}>
+                          <Text>{d.batchNo} 扣减 {d.deductQuantity}{d.unit}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {record.status === 'rejected' && record.reviewRemark && (
+                    <View className={styles.rejectRemark}>
+                      <Text>驳回原因：{record.reviewRemark}</Text>
+                    </View>
+                  )}
                 </View>
               ))
             ) : (

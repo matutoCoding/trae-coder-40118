@@ -19,7 +19,7 @@ const ConsumptionPage: React.FC = () => {
 
   const merchantRecords = useMemo(() => {
     return outboundRecords
-      .filter((r) => r.merchantId === merchantId)
+      .filter((r) => r.merchantId === merchantId && r.status === 'completed')
       .sort((a, b) => new Date(b.outboundDate).getTime() - new Date(a.outboundDate).getTime())
   }, [outboundRecords, merchantId])
 

@@ -1,8 +1,11 @@
 import React, { useMemo } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
+import classnames from 'classnames'
 import { useGrainStore } from '@/store'
 import { getOutboundStatusText } from '@/utils/helpers'
+import StatusTag from '@/components/StatusTag'
+import { PlannedDeduction } from '@/types'
 import styles from './index.module.scss'
 
 const OutboundDetailPage: React.FC = () => {
@@ -20,38 +23,78 @@ const OutboundDetailPage: React.FC = () => {
     )
   }
 
+  const isCompleted = record.status === 'completed'
+  const isRejected = record.status === 'rejected'
+  const isReviewed = record.status !== 'pending'
+  const hasRiskHints = record.riskHints && record.riskHints.length > 0
+
+  const handleBatchClick = (batchId: string) => {
+    Taro.navigateTo({ url: `/pages/batchDetail/index?id=${batchId}` })
+  }
+
+  const renderDeductionItem = (deduction: PlannedDeduction, clickable: boolean) => (
+    <View className={styles.deductionItem} key={deduction.batchId}>
+      <Text
+        className={classnames(styles.deductionBatchNo, clickable && styles.deductionBatchNoClickable)}
+        onClick={clickable ? () => handleBatchClick(deduction.batchId) : undefined}
+      >
+        {deduction.batchNo}
+      </Text>
+      <View className={styles.deductionDetail}>
+        <View className={styles.infoRow}>
+          <Text className={styles.infoLabel}>粮食品种</Text>
+          <Text className={styles.infoValue}>{deduction.grainType}</Text>
+        </View>
+        <View className={styles.infoRow}>
+          <Text className={styles.infoLabel}>仓号</Text>
+          <Text className={styles.infoValue}>{deduction.warehouseNo}</Text>
+        </View>
+        <View className={styles.infoRow}>
+          <Text className={styles.infoLabel}>入库日期</Text>
+          <Text className={styles.infoValue}>{deduction.inboundDate}</Text>
+        </View>
+        <View className={styles.infoRow}>
+          <Text className={styles.infoLabel}>到期日期</Text>
+          <Text className={styles.infoValue}>{deduction.expiryDate}</Text>
+        </View>
+        <View className={styles.infoRow}>
+          <Text className={styles.infoLabel}>扣减数量</Text>
+          <Text className={styles.infoValue}>{deduction.deductQuantity} {deduction.unit}</Text>
+        </View>
+      </View>
+    </View>
+  )
+
   return (
     <ScrollView scrollY style={{ height: '100vh' }}>
       <View className={styles.container}>
-        <View className={styles.headerCard}>
-          <View className={styles.headerTop}>
-            <Text className={styles.headerNo}>{record.outboundNo}</Text>
-            <View className={styles.headerTag}>
-              <Text className={styles.headerTagText}>{getOutboundStatusText(record.status)}</Text>
-            </View>
+        {isRejected && (
+          <View className={styles.rejectBanner}>
+            <Text className={styles.rejectBannerText}>{record.reviewRemark || '该出库申请已驳回'}</Text>
           </View>
-          <Text className={styles.headerDesc}>
-            {record.grainType} · {record.quantity}{record.unit} · {record.merchantName}
-          </Text>
-        </View>
+        )}
 
-        <View className={styles.infoSection}>
-          <Text className={styles.infoSectionTitle}>出库信息</Text>
+        <View className={styles.section}>
+          <Text className={styles.sectionTitle}>出库信息</Text>
+          <View className={styles.statusRow}>
+            <Text className={styles.infoLabel}>状态</Text>
+            <StatusTag status={record.status} text={getOutboundStatusText(record.status)} />
+          </View>
           <View className={styles.infoRow}>
             <Text className={styles.infoLabel}>出库单号</Text>
             <Text className={styles.infoValue}>{record.outboundNo}</Text>
           </View>
           <View className={styles.infoRow}>
-            <Text className={styles.infoLabel}>关联批号</Text>
-            <Text className={styles.infoValue}>{record.batchNo}</Text>
-          </View>
-          <View className={styles.infoRow}>
-            <Text className={styles.infoLabel}>粮食品种</Text>
-            <Text className={styles.infoValue}>{record.grainType}</Text>
+            <Text className={styles.infoLabel}>商户名称</Text>
+            <Text className={styles.infoValue}>{record.merchantName}</Text>
           </View>
           <View className={styles.infoRow}>
             <Text className={styles.infoLabel}>出库数量</Text>
             <Text className={styles.infoValue}>{record.quantity} {record.unit}</Text>
+          </View>
+          <View className={styles.infoRow}>
+            <Text className={styles.infoLabel}>粮食品种</Text>
+            <Text className={styles.infoValue}>{record.grainType}</Text>
           </View>
           <View className={styles.infoRow}>
             <Text className={styles.infoLabel}>出库日期</Text>
@@ -61,25 +104,56 @@ const OutboundDetailPage: React.FC = () => {
             <Text className={styles.infoLabel}>操作人</Text>
             <Text className={styles.infoValue}>{record.operator}</Text>
           </View>
-          {record.remark && (
-            <View className={styles.infoRow}>
-              <Text className={styles.infoLabel}>备注</Text>
-              <Text className={styles.infoValue}>{record.remark}</Text>
-            </View>
-          )}
         </View>
 
-        <View className={styles.infoSection}>
-          <Text className={styles.infoSectionTitle}>商户信息</Text>
-          <View className={styles.infoRow}>
-            <Text className={styles.infoLabel}>商户名称</Text>
-            <Text className={styles.infoValue}>{record.merchantName}</Text>
+        {isReviewed && (
+          <View className={styles.section}>
+            <Text className={styles.sectionTitle}>审批信息</Text>
+            <View className={styles.infoRow}>
+              <Text className={styles.infoLabel}>审批人</Text>
+              <Text className={styles.infoValue}>{record.reviewer}</Text>
+            </View>
+            <View className={styles.infoRow}>
+              <Text className={styles.infoLabel}>审批日期</Text>
+              <Text className={styles.infoValue}>{record.reviewDate}</Text>
+            </View>
+            {record.reviewRemark && (
+              <View className={styles.infoRow}>
+                <Text className={styles.infoLabel}>审批备注</Text>
+                <Text className={styles.infoValue}>{record.reviewRemark}</Text>
+              </View>
+            )}
           </View>
-          <View className={styles.infoRow}>
-            <Text className={styles.infoLabel}>额度编号</Text>
-            <Text className={styles.infoValue}>{record.quotaId}</Text>
+        )}
+
+        {record.plannedDeductions.length > 0 && (
+          <View className={styles.section}>
+            <Text className={styles.sectionTitle}>计划扣减</Text>
+            <View className={styles.deductionList}>
+              {record.plannedDeductions.map((d) => renderDeductionItem(d, false))}
+            </View>
           </View>
-        </View>
+        )}
+
+        {isCompleted && record.actualDeductions.length > 0 && (
+          <View className={styles.section}>
+            <Text className={styles.sectionTitle}>实际扣减</Text>
+            <View className={styles.deductionList}>
+              {record.actualDeductions.map((d) => renderDeductionItem(d, true))}
+            </View>
+          </View>
+        )}
+
+        {hasRiskHints && (
+          <View className={classnames(styles.section, styles.riskSection)}>
+            <Text className={styles.sectionTitle}>风险提示</Text>
+            {record.riskHints.map((hint, idx) => (
+              <View className={styles.riskItem} key={idx}>
+                <Text>{hint}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
     </ScrollView>
   )

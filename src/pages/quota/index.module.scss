@@ -268,3 +268,129 @@
   margin-top: 4rpx;
   display: block;
 }
+
+.appCard {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.appCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.appMerchantName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.appStatus {
+  padding: $spacing-xs $spacing-md;
+  border-radius: $radius-round;
+  font-size: 22rpx;
+}
+
+.appStatusPending {
+  background-color: rgba(255, 184, 0, 0.1);
+  color: #B26A00;
+}
+
+.appStatusApproved {
+  background-color: rgba(45, 125, 70, 0.1);
+  color: #2D7D46;
+}
+
+.appStatusRejected {
+  background-color: rgba(217, 48, 37, 0.1);
+  color: #D93025;
+}
+
+.appBody {
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-border-light;
+}
+
+.appInfoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-xs 0;
+}
+
+.appInfoLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.appInfoValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.appReviewRow {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-border-light;
+}
+
+.appReviewInput {
+  flex: 1;
+  height: 72rpx;
+  background-color: $color-bg-page;
+  border: 1rpx solid $color-border;
+  border-radius: $radius-md;
+  padding: 0 $spacing-md;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.appApproveBtn {
+  flex: 1;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2D7D46 0%, #3D9D56 100%);
+  border-radius: $radius-md;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.appApproveBtnText {
+  font-size: $font-size-sm;
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+}
+
+.appRejectBtn {
+  flex: 1;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(217, 48, 37, 0.08);
+  border: 1rpx solid rgba(217, 48, 37, 0.2);
+  border-radius: $radius-md;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.appRejectBtnText {
+  font-size: $font-size-sm;
+  color: #D93025;
+  font-weight: $font-weight-medium;
+}
