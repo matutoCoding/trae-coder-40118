@@ -33,6 +33,17 @@
   color: #2D7D46;
 }
 
+.pendingTag {
+  padding: 2rpx $spacing-sm;
+  background-color: rgba(255, 184, 0, 0.15);
+  border-radius: $radius-round;
+}
+
+.pendingText {
+  font-size: 20rpx;
+  color: #B26A00;
+}
+
 .value {
   font-size: $font-size-sm;
   color: $color-text-primary;
@@ -62,12 +73,40 @@
   height: 100%;
   border-radius: $radius-round;
   transition: width 0.4s ease;
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   z-index: 2;
+}
+
+.pendingFill {
+  height: 100%;
+  position: absolute;
+  top: 0;
+  z-index: 3;
+  border-top-right-radius: $radius-round;
+  border-bottom-right-radius: $radius-round;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 184, 0, 0.8) 0px,
+    rgba(255, 184, 0, 0.8) 6rpx,
+    rgba(255, 136, 0, 0.8) 6rpx,
+    rgba(255, 136, 0, 0.8) 12rpx
+  );
 }
 
 .normal {
   background: linear-gradient(90deg, #2D7D46 0%, #5CB85C 100%);
+}
+
+.pendingNormal {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 184, 0, 0.9) 0px,
+    rgba(255, 184, 0, 0.9) 6rpx,
+    rgba(255, 136, 0, 0.9) 6rpx,
+    rgba(255, 136, 0, 0.9) 12rpx
+  );
 }
 
 .warningStyle {

@@ -10,7 +10,8 @@ export default defineAppConfig({
     'pages/quotaApply/index',
     'pages/inspection/index',
     'pages/warning/index',
-    'pages/consumption/index'
+    'pages/consumption/index',
+    'pages/approvalHistory/index'
   ],
   window: {
     backgroundTextStyle: 'light',

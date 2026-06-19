@@ -66,3 +66,12 @@ export const getInspectionTypeText = (type: string): string => {
   }
   return map[type] || type
 }
+
+export const getQuotaAppStatusText = (status: string): string => {
+  const map: Record<string, string> = {
+    pending: '待审批',
+    approved: '已通过',
+    rejected: '已驳回'
+  }
+  return map[status] || status
+}

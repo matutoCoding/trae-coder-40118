@@ -442,3 +442,43 @@
   font-size: $font-size-sm;
   color: #D93025;
 }
+
+.pendingDeductInfo {
+  font-size: $font-size-xs;
+  color: #FF8C00;
+  margin-left: $spacing-xs;
+}
+
+.regenerateBtn {
+  flex: 1;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 140, 0, 0.08);
+  border: 1rpx solid rgba(255, 140, 0, 0.3);
+  border-radius: $radius-md;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.regenerateBtnText {
+  font-size: $font-size-md;
+  color: #FF8C00;
+  font-weight: $font-weight-medium;
+}
+
+.pendingPlanTitle {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+  font-weight: $font-weight-medium;
+}
+
+.pendingPlanItemLeft {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}

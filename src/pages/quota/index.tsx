@@ -30,10 +30,10 @@ const QuotaPage: React.FC = () => {
   const { year, quarter } = getCurrentQuarter()
   const quarterLabel = `${year}年${getQuarterLabel(quarter)}额度`
 
-  const totalBase = useMemo(() => quotas.reduce((sum, q) => sum + q.baseQuota, 0), [quotas])
+  const totalBase = useMemo(() => quotas.reduce((sum, q) => sum + q.baseQuota + (q.approved || 0), 0), [quotas])
   const totalUsed = useMemo(() => quotas.reduce((sum, q) => sum + q.used, 0), [quotas])
-  const totalApply = useMemo(() => quotas.reduce((sum, q) => sum + (q.approved || 0), 0), [quotas])
-  const totalRemaining = totalBase + totalApply - totalUsed
+  const totalPendingUsed = useMemo(() => quotas.reduce((sum, q) => sum + (q.pendingUsed || 0), 0), [quotas])
+  const totalRemaining = totalBase - totalUsed - totalPendingUsed
 
   const filteredConsumption = useMemo(() => {
     const completed = outboundRecords.filter((r) => r.status === 'completed')
@@ -67,31 +67,44 @@ const QuotaPage: React.FC = () => {
     })
   }
 
+  const getQuotaStatus = (quota) => {
+    const totalQuota = quota.baseQuota + (quota.approved || 0)
+    const totalConsumed = quota.used + (quota.pendingUsed || 0)
+    const ratio = totalQuota > 0 ? totalConsumed / totalQuota : 0
+    if (ratio >= 1) return 'exhausted'
+    if (ratio >= 0.8) return 'warning'
+    return 'normal'
+  }
+
+  const getQuotaRemaining = (quota) => {
+    const totalQuota = quota.baseQuota + (quota.approved || 0)
+    const totalConsumed = quota.used + (quota.pendingUsed || 0)
+    return totalQuota - totalConsumed
+  }
+
   return (
     <View className={styles.container}>
       <View className={styles.header}>
         <Text className={styles.headerTitle}>{quarterLabel}</Text>
         <View className={styles.quotaHeaderStats}>
           <View className={styles.headerStatItem}>
-            <Text className={styles.headerStatValue}>{totalBase.toFixed(0)}<Text style={{ fontSize: '22rpx', color: '#8A8A8A' }}>吨</Text></Text>
-            <Text className={styles.headerStatLabel}>当季总额度</Text>
+            <Text className={styles.headerStatValue}>{totalBase.toFixed(0)}<Text style={{ fontSize: '22rpx', color: 'rgba(255,255,255,0.7)' }}>吨</Text></Text>
+            <Text className={styles.headerStatLabel}>总额度</Text>
           </View>
           <View className={styles.headerStatItem}>
-            <Text className={styles.headerStatValue}>{totalUsed.toFixed(0)}<Text style={{ fontSize: '22rpx', color: '#8A8A8A' }}>吨</Text></Text>
+            <Text className={styles.headerStatValue}>{totalUsed.toFixed(0)}<Text style={{ fontSize: '22rpx', color: 'rgba(255,255,255,0.7)' }}>吨</Text></Text>
             <Text className={styles.headerStatLabel}>已使用</Text>
           </View>
           <View className={styles.headerStatItem}>
+            <Text className={styles.headerStatValue}>{totalPendingUsed.toFixed(0)}<Text style={{ fontSize: '22rpx', color: 'rgba(255,255,255,0.7)' }}>吨</Text></Text>
+            <Text className={styles.headerStatLabel}>待使用</Text>
+          </View>
+          <View className={styles.headerStatItem}>
             <Text className={classnames(styles.headerStatValue, totalRemaining < 0 && styles.headerStatValueDanger)}>
-              {totalRemaining.toFixed(0)}<Text style={{ fontSize: '22rpx', color: '#8A8A8A' }}>吨</Text>
+              {totalRemaining.toFixed(0)}<Text style={{ fontSize: '22rpx', color: 'rgba(255,255,255,0.7)' }}>吨</Text>
             </Text>
             <Text className={styles.headerStatLabel}>剩余可用</Text>
           </View>
-          {totalApply > 0 && (
-            <View className={styles.headerStatItem}>
-              <Text className={styles.headerStatValue} style={{ color: '#2D7D46' }}>+{totalApply.toFixed(0)}<Text style={{ fontSize: '22rpx', color: '#8A8A8A' }}>吨</Text></Text>
-              <Text className={styles.headerStatLabel}>已批追加</Text>
-            </View>
-          )}
         </View>
       </View>
 
@@ -115,52 +128,81 @@ const QuotaPage: React.FC = () => {
         {activeTab === 'overview' && (
           <View>
             {quotas.length > 0 ? (
-              quotas.map((quota) => (
-                <View key={quota.id} className={styles.quotaCard}>
-                  <View className={styles.quotaCardHeader}>
-                    <View className={styles.quotaMerchantInfo}>
-                      <Text className={styles.quotaMerchantName}>{quota.merchantName}</Text>
-                      <Text className={styles.quotaMerchantId}>{quota.merchantId}</Text>
+              quotas.map((quota) => {
+                const status = getQuotaStatus(quota)
+                const remaining = getQuotaRemaining(quota)
+                return (
+                  <View key={quota.id} className={styles.quotaCard}>
+                    <View className={styles.quotaCardHeader}>
+                      <View className={styles.quotaMerchantInfo}>
+                        <Text className={styles.quotaMerchantName}>{quota.merchantName}</Text>
+                        <Text className={styles.quotaMerchantId}>{quota.merchantId}</Text>
+                      </View>
+                      <View
+                        className={classnames(
+                          styles.quotaStatus,
+                          status === 'exhausted' && styles.quotaStatusExhausted,
+                          status === 'warning' && styles.quotaStatusWarning
+                        )}
+                      >
+                        <Text className={styles.quotaStatusText}>
+                          {status === 'exhausted'
+                            ? '额度用尽'
+                            : status === 'warning'
+                            ? '即将用尽'
+                            : '正常'}
+                        </Text>
+                      </View>
                     </View>
-                    <View
-                      className={classnames(
-                        styles.quotaStatus,
-                        quota.used / (quota.baseQuota + (quota.approved || 0)) >= 1 && styles.quotaStatusExhausted,
-                        quota.used / (quota.baseQuota + (quota.approved || 0)) >= 0.8 &&
-                          quota.used / (quota.baseQuota + (quota.approved || 0)) < 1 &&
-                          styles.quotaStatusWarning
-                      )}
-                    >
-                      <Text className={styles.quotaStatusText}>
-                        {quota.used / (quota.baseQuota + (quota.approved || 0)) >= 1
-                          ? '额度用尽'
-                          : quota.used / (quota.baseQuota + (quota.approved || 0)) >= 0.8
-                          ? '即将用尽'
-                          : '正常'}
-                      </Text>
+                    <QuotaBar
+                      used={quota.used}
+                      base={quota.baseQuota}
+                      approved={quota.approved}
+                      pendingUsed={quota.pendingUsed}
+                    />
+                    <View className={styles.quotaStats}>
+                      <View className={styles.quotaStatItem}>
+                        <Text className={styles.quotaStatValue}>
+                          {(quota.baseQuota + (quota.approved || 0)).toFixed(0)}
+                        </Text>
+                        <Text className={styles.quotaStatLabel}>总额度</Text>
+                      </View>
+                      <View className={styles.quotaStatItem}>
+                        <Text className={styles.quotaStatValue}>
+                          {quota.used.toFixed(0)}
+                        </Text>
+                        <Text className={styles.quotaStatLabel}>已使用</Text>
+                      </View>
+                      <View className={styles.quotaStatItem}>
+                        <Text className={classnames(styles.quotaStatValue, styles.quotaStatValuePending)}>
+                          {(quota.pendingUsed || 0).toFixed(0)}
+                        </Text>
+                        <Text className={styles.quotaStatLabel}>待使用</Text>
+                      </View>
+                      <View className={styles.quotaStatItem}>
+                        <Text className={classnames(styles.quotaStatValue, styles.quotaStatValueRemaining)}>
+                          {remaining.toFixed(0)}
+                        </Text>
+                        <Text className={styles.quotaStatLabel}>剩余</Text>
+                      </View>
+                    </View>
+                    <View className={styles.quotaActions}>
+                      <View
+                        className={classnames(styles.quotaActionBtn, styles.quotaActionBtnPrimary)}
+                        onClick={() => handleApply(quota)}
+                      >
+                        <Text className={styles.quotaActionBtnText}>申请额度</Text>
+                      </View>
+                      <View
+                        className={classnames(styles.quotaActionBtn, styles.quotaActionBtnDefault)}
+                        onClick={() => handleViewConsumption(quota)}
+                      >
+                        <Text className={styles.quotaActionBtnTextSecondary}>消费明细</Text>
+                      </View>
                     </View>
                   </View>
-                  <QuotaBar
-                    used={quota.used}
-                    base={quota.baseQuota}
-                    approved={quota.approved}
-                  />
-                  <View className={styles.quotaActions}>
-                    <View
-                      className={classnames(styles.quotaActionBtn, styles.quotaActionBtnPrimary)}
-                      onClick={() => handleApply(quota)}
-                    >
-                      <Text className={styles.quotaActionBtnText}>申请额度</Text>
-                    </View>
-                    <View
-                      className={classnames(styles.quotaActionBtn, styles.quotaActionBtnDefault)}
-                      onClick={() => handleViewConsumption(quota)}
-                    >
-                      <Text className={styles.quotaActionBtnTextSecondary}>消费明细</Text>
-                    </View>
-                  </View>
-                </View>
-              ))
+                )
+              })
             ) : (
               <EmptyState message='暂无额度数据，季度重置时将自动生成' />
             )}

@@ -21,15 +21,18 @@
 
 .quotaHeaderStats {
   display: flex;
-  gap: $spacing-md;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
 }
 
 .headerStatItem {
   flex: 1;
+  min-width: calc(25% - #{$spacing-sm});
   background-color: rgba(255, 255, 255, 0.15);
   border-radius: $radius-md;
-  padding: $spacing-md;
+  padding: $spacing-md $spacing-sm;
   backdrop-filter: blur(10px);
+  text-align: center;
 }
 
 .headerStatValue {
@@ -393,4 +396,39 @@
   font-size: $font-size-sm;
   color: #D93025;
   font-weight: $font-weight-medium;
+}
+
+.quotaStats {
+  display: flex;
+  gap: $spacing-sm;
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-border-light;
+}
+
+.quotaStatItem {
+  flex: 1;
+  text-align: center;
+}
+
+.quotaStatValue {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: block;
+}
+
+.quotaStatLabel {
+  font-size: 20rpx;
+  color: $color-text-secondary;
+  margin-top: 4rpx;
+  display: block;
+}
+
+.quotaStatValuePending {
+  color: #B26A00;
+}
+
+.quotaStatValueRemaining {
+  color: $color-primary;
 }

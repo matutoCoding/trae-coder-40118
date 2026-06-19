@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { View, Text, ScrollView, Input, Picker } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import classnames from 'classnames'
@@ -6,6 +6,7 @@ import { useGrainStore } from '@/store'
 import { getOutboundStatusText, getDaysLeft } from '@/utils/helpers'
 import StatusTag from '@/components/StatusTag'
 import EmptyState from '@/components/EmptyState'
+import { PlannedDeduction } from '@/types'
 import styles from './index.module.scss'
 
 const TABS = [
@@ -15,17 +16,35 @@ const TABS = [
 ]
 
 const OutboundPage: React.FC = () => {
-  const { merchants, getFifoBatches, outboundRecords, createOutbound, reviewOutbound, getMerchantQuota } = useGrainStore()
+  const {
+    merchants,
+    getFifoBatches,
+    outboundRecords,
+    createOutbound,
+    reviewOutbound,
+    regenerateOutboundPlan,
+    updateOutboundPlan,
+    getMerchantQuota
+  } = useGrainStore()
   const [activeTab, setActiveTab] = useState('fifo')
   const [merchantIdx, setMerchantIdx] = useState<string>('')
   const [quantity, setQuantity] = useState<string>('')
   const [submitting, setSubmitting] = useState(false)
   const [reviewRemarks, setReviewRemarks] = useState<Record<string, string>>({})
   const [reviewing, setReviewing] = useState<Record<string, boolean>>({})
+  const [regenerating, setRegenerating] = useState<Record<string, boolean>>({})
 
   const fifoBatches = useMemo(() => getFifoBatches().slice(0, 10), [getFifoBatches])
   const totalAvailable = useMemo(() => {
-    return getFifoBatches().reduce((sum, b) => sum + b.remainingQuantity, 0)
+    return getFifoBatches().reduce((sum, b) => sum + b.effectiveRemaining, 0)
+  }, [getFifoBatches])
+
+  const batchPendingDeductMap = useMemo(() => {
+    const map: Record<string, number> = {}
+    getFifoBatches().forEach((b) => {
+      map[b.id] = b.pendingDeducted
+    })
+    return map
   }, [getFifoBatches])
 
   const selectedMerchant = useMemo(
@@ -94,22 +113,79 @@ const OutboundPage: React.FC = () => {
     }
   }
 
-  const handleReview = async (recordId: string, approved: boolean) => {
+  const handleRegeneratePlan = useCallback(async (recordId: string) => {
+    setRegenerating((prev) => ({ ...prev, [recordId]: true }))
+    try {
+      const result = await regenerateOutboundPlan(recordId)
+      if (result.success && result.newPlan) {
+        const updateResult = await updateOutboundPlan(recordId, result.newPlan)
+        Taro.showToast({
+          title: updateResult.success ? '扣减方案已更新' : updateResult.message,
+          icon: updateResult.success ? 'success' : 'none'
+        })
+      } else {
+        Taro.showToast({ title: result.message, icon: 'none' })
+      }
+    } catch {
+      Taro.showToast({ title: '重新生成失败，请重试', icon: 'none' })
+    } finally {
+      setRegenerating((prev) => ({ ...prev, [recordId]: false }))
+    }
+  }, [regenerateOutboundPlan, updateOutboundPlan])
+
+  const handleReview = useCallback(async (recordId: string, approved: boolean) => {
     const remark = reviewRemarks[recordId] || ''
     setReviewing((prev) => ({ ...prev, [recordId]: true }))
     try {
       const result = await reviewOutbound(recordId, approved, '当前审批人', remark)
-      Taro.showToast({ title: result.message, icon: result.success ? 'success' : 'none' })
+      if (result.needRegenerate) {
+        Taro.showModal({
+          title: '扣减方案已失效',
+          content: result.message,
+          confirmText: '重新生成',
+          cancelText: '稍后处理',
+          success: (res) => {
+            if (res.confirm) {
+              handleRegeneratePlan(recordId)
+            }
+          }
+        })
+      } else {
+        Taro.showToast({
+          title: result.message,
+          icon: result.success ? 'success' : 'none'
+        })
+      }
     } catch {
       Taro.showToast({ title: '审核异常，请重试', icon: 'none' })
     } finally {
       setReviewing((prev) => ({ ...prev, [recordId]: false }))
     }
-  }
+  }, [reviewRemarks, reviewOutbound, handleRegeneratePlan])
 
   const handleRecordDetail = (id: string) => {
     Taro.navigateTo({ url: `/pages/outboundDetail/index?id=${id}` })
   }
+
+  const getQuotaDisplay = () => {
+    if (!merchantQuota) return null
+    const { used, baseQuota, pendingUsed, approved = 0 } = merchantQuota
+    const totalBase = baseQuota + approved
+    const available = totalBase - used - pendingUsed
+    return { used, totalBase, pendingUsed, available }
+  }
+
+  const renderPendingDeductInfo = (batchId: string, unit: string) => {
+    const pending = batchPendingDeductMap[batchId] || 0
+    if (pending <= 0) return null
+    return (
+      <Text className={styles.pendingDeductInfo}>
+        （其他待审占用{pending}{unit}）
+      </Text>
+    )
+  }
+
+  const quotaDisplay = getQuotaDisplay()
 
   return (
     <View className={styles.container}>
@@ -149,13 +225,12 @@ const OutboundPage: React.FC = () => {
                     </Text>
                   </View>
                 </Picker>
-                {merchantQuota && (
+                {quotaDisplay && (
                   <View className={styles.quotaBadge}>
                     <Text className={styles.quotaBadgeText}>
-                      本季额度：{merchantQuota.used}/{merchantQuota.baseQuota}{merchantQuota.approved ? `(+${merchantQuota.approved})` : ''}吨（剩余
-                      {merchantQuota.baseQuota + (merchantQuota.approved || 0) - merchantQuota.used}吨）
+                      本季额度：{quotaDisplay.used}/{quotaDisplay.totalBase}吨 待审占用:{quotaDisplay.pendingUsed}吨 剩余{quotaDisplay.available}吨
                     </Text>
-                    {merchantQuota.status === 'exhausted' && (
+                    {merchantQuota?.status === 'exhausted' && (
                       <StatusTag status='exhausted' text='已用尽' size='small' />
                     )}
                   </View>
@@ -211,8 +286,20 @@ const OutboundPage: React.FC = () => {
                         <Text className={styles.fifoInfoValue}>{batch.warehouseNo}</Text>
                       </View>
                       <View className={styles.fifoInfoItem}>
-                        <Text className={styles.fifoInfoLabel}>剩余</Text>
+                        <Text className={styles.fifoInfoLabel}>实际剩余</Text>
                         <Text className={styles.fifoInfoValue}>{batch.remainingQuantity}{batch.unit}</Text>
+                      </View>
+                      <View className={styles.fifoInfoItem}>
+                        <Text className={styles.fifoInfoLabel}>待审占用</Text>
+                        <Text className={classnames(styles.fifoInfoValue, styles.warningText)}>
+                          {batch.pendingDeducted}{batch.unit}
+                        </Text>
+                      </View>
+                      <View className={styles.fifoInfoItem}>
+                        <Text className={styles.fifoInfoLabel}>可出</Text>
+                        <Text className={classnames(styles.fifoInfoValue)}>
+                          {batch.effectiveRemaining}{batch.unit}
+                        </Text>
                       </View>
                       <View className={styles.fifoInfoItem}>
                         <Text className={styles.fifoInfoLabel}>入仓</Text>
@@ -272,9 +359,13 @@ const OutboundPage: React.FC = () => {
 
                   {record.plannedDeductions.length > 0 && (
                     <View className={styles.pendingPlanList}>
-                      {record.plannedDeductions.map((plan) => (
+                      <Text className={styles.pendingPlanTitle}>计划扣减：</Text>
+                      {record.plannedDeductions.map((plan: PlannedDeduction) => (
                         <View key={plan.batchId} className={styles.pendingPlanItem}>
-                          <Text className={styles.pendingBatchNo}>{plan.batchNo}</Text>
+                          <View className={styles.pendingPlanItemLeft}>
+                            <Text className={styles.pendingBatchNo}>{plan.batchNo}</Text>
+                            {renderPendingDeductInfo(plan.batchId, plan.unit)}
+                          </View>
                           <Text className={styles.pendingDeduct}>扣减 {plan.deductQuantity}{plan.unit}</Text>
                         </View>
                       ))}
@@ -290,6 +381,17 @@ const OutboundPage: React.FC = () => {
                       ))}
                     </View>
                   )}
+
+                  <View className={styles.reviewRow}>
+                    <View
+                      className={styles.regenerateBtn}
+                      onClick={regenerating[record.id] ? undefined : () => handleRegeneratePlan(record.id)}
+                    >
+                      <Text className={styles.regenerateBtnText}>
+                        {regenerating[record.id] ? '生成中...' : '重新生成扣减方案'}
+                      </Text>
+                    </View>
+                  </View>
 
                   <View className={styles.reviewRow}>
                     <Input

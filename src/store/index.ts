@@ -5,7 +5,7 @@ import { mockBatches } from '@/data/batch'
 import { mockOutboundRecords } from '@/data/outbound'
 import { mockQuotas } from '@/data/quota'
 import { mockInspections } from '@/data/inspection'
-import { getCurrentQuarter, getDaysLeft } from '@/utils/helpers'
+import { getCurrentQuarter } from '@/utils/helpers'
 
 const WARNING_DAYS = 30
 const LARGE_OUTBOUND_THRESHOLD = 50
@@ -38,6 +38,7 @@ function buildQuotasForQuarter(year: number, quarter: string): MerchantQuota[] {
     year,
     baseQuota: m.baseQuota,
     used: 0,
+    pendingUsed: 0,
     approved: 0,
     unit: '吨',
     status: 'active' as const
@@ -59,20 +60,38 @@ function ensureQuotasExist(quotas: MerchantQuota[]): MerchantQuota[] {
     const newQuotas = buildQuotasForQuarter(year, quarter)
     return [...markedAsExpired, ...newQuotas]
   }
-  return quotas
+  return quotas.map((q) => ({ pendingUsed: 0, ...q }))
 }
 
-function computeFifoPlan(batches: GrainBatch[], totalQuantity: number): PlannedDeduction[] {
+function computeFifoPlan(batches: GrainBatch[], pendingOutbounds: OutboundRecord[], totalQuantity: number, excludeRecordId?: string): { plan: PlannedDeduction[], usedStock: Record<string, number> } {
+  const usedStock: Record<string, number> = {}
+  for (const r of pendingOutbounds) {
+    if (excludeRecordId && r.id === excludeRecordId) continue
+    for (const pd of r.plannedDeductions) {
+      usedStock[pd.batchId] = (usedStock[pd.batchId] || 0) + pd.deductQuantity
+    }
+  }
+
   const fifoList = batches
-    .map((b) => ({ ...b, computedStatus: calcBatchStatus(b) }))
-    .filter((b) => ['normal', 'warning'].includes(b.computedStatus) && b.remainingQuantity > 0)
+    .map((b) => {
+      const computedStatus = calcBatchStatus(b)
+      const pendingDeducted = usedStock[b.id] || 0
+      const effectiveRemaining = b.remainingQuantity - pendingDeducted
+      return {
+        ...b,
+        computedStatus,
+        effectiveRemaining,
+        pendingDeducted
+      }
+    })
+    .filter((b) => ['normal', 'warning'].includes(b.computedStatus) && b.effectiveRemaining > 0)
     .sort((a, b) => dayjs(a.inboundDate).valueOf() - dayjs(b.inboundDate).valueOf())
 
   let remaining = totalQuantity
   const plan: PlannedDeduction[] = []
   for (const batch of fifoList) {
     if (remaining <= 0) break
-    const deduct = Math.min(batch.remainingQuantity, remaining)
+    const deduct = Math.min(batch.effectiveRemaining, remaining)
     plan.push({
       batchId: batch.id,
       batchNo: batch.batchNo,
@@ -85,7 +104,41 @@ function computeFifoPlan(batches: GrainBatch[], totalQuantity: number): PlannedD
     })
     remaining -= deduct
   }
-  return plan
+
+  return { plan, usedStock }
+}
+
+function verifyPlanValidity(batches: GrainBatch[], pendingOutbounds: OutboundRecord[], plannedDeductions: PlannedDeduction[], excludeRecordId: string): { valid: boolean; message: string; effectiveRemainingByBatch: Record<string, number> } {
+  const usedStock: Record<string, number> = {}
+  for (const r of pendingOutbounds) {
+    if (r.id === excludeRecordId) continue
+    for (const pd of r.plannedDeductions) {
+      usedStock[pd.batchId] = (usedStock[pd.batchId] || 0) + pd.deductQuantity
+    }
+  }
+
+  const effectiveRemainingByBatch: Record<string, number> = {}
+  for (const b of batches) {
+    const pending = usedStock[b.id] || 0
+    effectiveRemainingByBatch[b.id] = b.remainingQuantity - pending
+  }
+
+  for (const plan of plannedDeductions) {
+    const batch = batches.find((b) => b.id === plan.batchId)
+    if (!batch) {
+      return { valid: false, message: `批次 ${plan.batchNo} 不存在`, effectiveRemainingByBatch }
+    }
+    const effective = effectiveRemainingByBatch[plan.batchId]
+    if (effective < plan.deductQuantity) {
+      return {
+        valid: false,
+        message: `批次 ${plan.batchNo} 库存不足：剩余 ${batch.remainingQuantity} 吨，其他待审单已占用 ${usedStock[plan.batchId] || 0} 吨，可用于本单的仅剩 ${effective} 吨，需扣 ${plan.deductQuantity} 吨`,
+        effectiveRemainingByBatch
+      }
+    }
+  }
+
+  return { valid: true, message: '', effectiveRemainingByBatch }
 }
 
 function buildRiskHints(plan: PlannedDeduction[], quantity: number, quotaRemaining: number): string[] {
@@ -104,7 +157,7 @@ function buildRiskHints(plan: PlannedDeduction[], quantity: number, quotaRemaini
     }
   }
   if (quotaRemaining - quantity < 50 && quotaRemaining - quantity > 0) {
-    hints.push(`审批后该商户额度将仅剩${quotaRemaining - quantity}吨`)
+    hints.push(`审批后该商户可用额度将仅剩${quotaRemaining - quantity}吨`)
   }
   return hints
 }
@@ -128,9 +181,16 @@ interface GrainStore {
     approved: boolean,
     reviewer: string,
     reviewRemark: string
+  ) => Promise<{ success: boolean; message: string; needRegenerate?: boolean; newPlan?: PlannedDeduction[] }>
+  regenerateOutboundPlan: (
+    recordId: string
+  ) => Promise<{ success: boolean; message: string; newPlan?: PlannedDeduction[] }>
+  updateOutboundPlan: (
+    recordId: string,
+    newPlan: PlannedDeduction[]
   ) => Promise<{ success: boolean; message: string }>
-  getFifoBatches: () => GrainBatch[]
-  getAvailableBatches: () => GrainBatch[]
+  getFifoBatches: () => Array<GrainBatch & { effectiveRemaining: number; pendingDeducted: number }>
+  getAvailableBatches: () => Array<GrainBatch & { effectiveRemaining: number; pendingDeducted: number }>
   getBatchWithStatus: (batch: GrainBatch) => GrainBatch
   getBatchesWithComputedStatus: () => GrainBatch[]
   addInspection: (inspection: InspectionRecord) => void
@@ -143,6 +203,7 @@ interface GrainStore {
   getPendingOutbound: () => OutboundRecord[]
   getPendingQuotaApplications: () => QuotaApplication[]
   getCompletedOutbound: () => OutboundRecord[]
+  getApprovalHistory: (filters?: { merchantId?: string; status?: string; startDate?: string; endDate?: string; type?: 'outbound' | 'quota' }) => Array<{ type: 'outbound' | 'quota'; record: OutboundRecord | QuotaApplication }>
 }
 
 export const useGrainStore = create<GrainStore>((set, get) => {
@@ -186,26 +247,20 @@ export const useGrainStore = create<GrainStore>((set, get) => {
           return
         }
 
-        const totalAvailable = quota.baseQuota + (quota.approved || 0) - quota.used
+        const totalAvailable = quota.baseQuota + (quota.approved || 0) - quota.used - quota.pendingUsed
         if (totalAvailable < totalQuantity) {
           resolve({
             success: false,
-            message: `额度不足！本季剩余${totalAvailable}吨，请先申请追加额度`,
+            message: `额度不足！本季可用${totalAvailable}吨（已用${quota.used}吨，待审占用${quota.pendingUsed}吨），请先申请追加额度`,
             needApply: true
           })
           return
         }
 
-        const fifoList = state.getFifoBatches()
-        const available = fifoList.reduce((sum, b) => sum + b.remainingQuantity, 0)
-        if (available < totalQuantity) {
-          resolve({ success: false, message: `库存不足！可用库存仅${available}吨` })
-          return
-        }
-
-        const plannedDeductions = computeFifoPlan(state.batches, totalQuantity)
+        const pendingList = state.outboundRecords.filter((r) => r.status === 'pending')
+        const { plan: plannedDeductions, usedStock } = computeFifoPlan(state.batches, pendingList, totalQuantity)
         if (plannedDeductions.length === 0 || plannedDeductions.reduce((s, p) => s + p.deductQuantity, 0) < totalQuantity) {
-          resolve({ success: false, message: 'FIFO计划计算异常，可用库存不足' })
+          resolve({ success: false, message: '可用库存不足（含待审单占用），请减少数量或等待其他单处理' })
           return
         }
 
@@ -243,14 +298,20 @@ export const useGrainStore = create<GrainStore>((set, get) => {
           outboundRecords: [...state.outboundRecords, newRecord],
           quotas: ensuredQuotas.map((q) => {
             if (q.id === quota.id) {
-              const newUsed = q.used + totalQuantity
-              return { ...q, used: newUsed }
+              const newPendingUsed = q.pendingUsed + totalQuantity
+              const totalForQuota = q.baseQuota + (q.approved || 0)
+              const totalOccupied = q.used + newPendingUsed
+              return {
+                ...q,
+                pendingUsed: newPendingUsed,
+                status: totalOccupied >= totalForQuota ? ('exhausted' as const) : ('active' as const)
+              }
             }
             return q
           })
         }))
 
-        console.info('[Store] createOutbound 待审核:', { outboundNo, merchantId, totalQuantity })
+        console.info('[Store] createOutbound 待审核（占用pendingUsed）:', { outboundNo, merchantId, totalQuantity, usedStock })
         resolve({ success: true, message: '出库申请已提交，等待审核', record: newRecord })
       })
     },
@@ -266,6 +327,25 @@ export const useGrainStore = create<GrainStore>((set, get) => {
         const record = state.outboundRecords[recordIdx]
         if (record.status !== 'pending') {
           resolve({ success: false, message: '该出库单已审核' })
+          return
+        }
+
+        const pendingList = state.outboundRecords.filter((r) => r.status === 'pending')
+        const { valid, message, effectiveRemainingByBatch } = verifyPlanValidity(
+          state.batches,
+          pendingList,
+          record.plannedDeductions,
+          record.id
+        )
+
+        if (!valid) {
+          console.warn('[Store] reviewOutbound 审核校验失败:', { outboundNo: record.outboundNo, message })
+          const { plan: newPlan } = computeFifoPlan(state.batches, pendingList, record.quantity, record.id)
+          if (newPlan.reduce((s, p) => s + p.deductQuantity, 0) < record.quantity) {
+            resolve({ success: false, message: `${message}，且已无法重新生成可用扣减方案`, needRegenerate: true })
+          } else {
+            resolve({ success: false, message: `${message}，请重新生成扣减方案`, needRegenerate: true, newPlan })
+          }
           return
         }
 
@@ -299,13 +379,18 @@ export const useGrainStore = create<GrainStore>((set, get) => {
           }
 
           const { year, quarter } = getCurrentQuarter()
-          const newQuotas = ensureQuotasExist(state.quotas).map((q) => {
+          const ensuredQuotas = ensureQuotasExist(state.quotas)
+          const newQuotas = ensuredQuotas.map((q) => {
             if (q.id === record.quotaId) {
+              const newUsed = q.used + record.quantity
+              const newPendingUsed = q.pendingUsed - record.quotaOccupied
               const totalForQuota = q.baseQuota + (q.approved || 0)
-              const usedAfterReview = q.used
+              const totalOccupied = newUsed + newPendingUsed
               return {
                 ...q,
-                status: usedAfterReview >= totalForQuota ? ('exhausted' as const) : ('active' as const)
+                used: newUsed,
+                pendingUsed: Math.max(newPendingUsed, 0),
+                status: totalOccupied >= totalForQuota ? ('exhausted' as const) : ('active' as const)
               }
             }
             return q
@@ -321,18 +406,20 @@ export const useGrainStore = create<GrainStore>((set, get) => {
             quotas: [...otherQuotas, ...newQuotas]
           })
 
-          console.info('[Store] reviewOutbound 通过:', { outboundNo: record.outboundNo, actualDeductions })
+          console.info('[Store] reviewOutbound 通过:', { outboundNo: record.outboundNo, actualDeductions, effectiveRemainingByBatch })
           resolve({ success: true, message: '审核通过，已扣库存和额度' })
         } else {
-          const ensuredQuotas = ensureQuotasExist(state.quotas)
           const { year, quarter } = getCurrentQuarter()
+          const ensuredQuotas = ensureQuotasExist(state.quotas)
           const newQuotas = ensuredQuotas.map((q) => {
             if (q.id === record.quotaId) {
-              const restoredUsed = q.used - record.quotaOccupied
+              const newPendingUsed = q.pendingUsed - record.quotaOccupied
+              const totalForQuota = q.baseQuota + (q.approved || 0)
+              const totalOccupied = q.used + Math.max(newPendingUsed, 0)
               return {
                 ...q,
-                used: Math.max(restoredUsed, 0),
-                status: restoredUsed < q.baseQuota + (q.approved || 0) ? ('active' as const) : q.status
+                pendingUsed: Math.max(newPendingUsed, 0),
+                status: totalOccupied >= totalForQuota ? ('exhausted' as const) : ('active' as const)
               }
             }
             return q
@@ -356,17 +443,95 @@ export const useGrainStore = create<GrainStore>((set, get) => {
             quotas: [...otherQuotas, ...newQuotas]
           })
 
-          console.info('[Store] reviewOutbound 驳回:', { outboundNo: record.outboundNo })
+          console.info('[Store] reviewOutbound 驳回（释放pendingUsed）:', { outboundNo: record.outboundNo })
           resolve({ success: true, message: '已驳回，已释放额度占用' })
         }
       })
     },
 
+    regenerateOutboundPlan: (recordId) => {
+      return new Promise((resolve) => {
+        const state = get()
+        const record = state.outboundRecords.find((r) => r.id === recordId)
+        if (!record || record.status !== 'pending') {
+          resolve({ success: false, message: '待审单不存在或已处理' })
+          return
+        }
+
+        const pendingList = state.outboundRecords.filter((r) => r.status === 'pending')
+        const { plan } = computeFifoPlan(state.batches, pendingList, record.quantity, record.id)
+        if (plan.reduce((s, p) => s + p.deductQuantity, 0) < record.quantity) {
+          resolve({ success: false, message: '库存不足，无法重新生成扣减方案' })
+          return
+        }
+
+        resolve({ success: true, message: '重新生成方案成功', newPlan: plan })
+      })
+    },
+
+    updateOutboundPlan: (recordId, newPlan) => {
+      return new Promise((resolve) => {
+        const state = get()
+        const recordIdx = state.outboundRecords.findIndex((r) => r.id === recordId)
+        if (recordIdx === -1) {
+          resolve({ success: false, message: '出库单不存在' })
+          return
+        }
+        const record = state.outboundRecords[recordIdx]
+        if (record.status !== 'pending') {
+          resolve({ success: false, message: '该出库单已审核' })
+          return
+        }
+
+        const pendingList = state.outboundRecords.filter((r) => r.status === 'pending')
+        const { valid, message } = verifyPlanValidity(state.batches, pendingList, newPlan, record.id)
+        if (!valid) {
+          resolve({ success: false, message })
+          return
+        }
+
+        const newRecords = [...state.outboundRecords]
+        const grainTypes = [...new Set(newPlan.map((p) => p.grainType))]
+        const ensuredQuotas = ensureQuotasExist(state.quotas)
+        const quota = ensuredQuotas.find((q) => q.id === record.quotaId)
+        const totalAvailable = quota ? quota.baseQuota + (quota.approved || 0) - quota.used - quota.pendingUsed + record.quotaOccupied : 0
+        const riskHints = buildRiskHints(newPlan, record.quantity, totalAvailable)
+
+        newRecords[recordIdx] = {
+          ...record,
+          plannedDeductions: newPlan,
+          batchNo: newPlan[0].batchNo,
+          grainType: grainTypes.length === 1 ? grainTypes[0] : '多品种',
+          riskHints
+        }
+
+        set({ outboundRecords: newRecords })
+        resolve({ success: true, message: '扣减方案已更新' })
+      })
+    },
+
     getFifoBatches: () => {
       const state = get()
+      const pendingList = state.outboundRecords.filter((r) => r.status === 'pending')
+      const usedStock: Record<string, number> = {}
+      for (const r of pendingList) {
+        for (const pd of r.plannedDeductions) {
+          usedStock[pd.batchId] = (usedStock[pd.batchId] || 0) + pd.deductQuantity
+        }
+      }
+
       return state.batches
-        .map((b) => state.getBatchWithStatus(b))
-        .filter((b) => ['normal', 'warning'].includes(b.status) && b.remainingQuantity > 0)
+        .map((b) => {
+          const computedStatus = calcBatchStatus(b)
+          const pendingDeducted = usedStock[b.id] || 0
+          return {
+            ...b,
+            status: computedStatus,
+            effectiveRemaining: b.remainingQuantity - pendingDeducted,
+            pendingDeducted
+          }
+        })
+        .filter((b) => ['normal', 'warning'].includes(b.status) && b.effectiveRemaining > 0)
         .sort((a, b) => dayjs(a.inboundDate).valueOf() - dayjs(b.inboundDate).valueOf())
     },
 
@@ -486,7 +651,9 @@ export const useGrainStore = create<GrainStore>((set, get) => {
             const newQuotas = [...ensuredQuotas]
             const quota = { ...newQuotas[quotaIdx] }
             quota.approved = (quota.approved || 0) + app.applyQuota
-            if (quota.baseQuota + quota.approved > quota.used && quota.status === 'exhausted') {
+            const totalForQuota = quota.baseQuota + (quota.approved || 0)
+            const totalOccupied = quota.used + quota.pendingUsed
+            if (totalOccupied < totalForQuota && quota.status === 'exhausted') {
               quota.status = 'active'
             }
             newQuotas[quotaIdx] = quota
@@ -516,6 +683,45 @@ export const useGrainStore = create<GrainStore>((set, get) => {
       return state.quotaApplications
         .filter((a) => a.status === 'pending')
         .sort((a, b) => new Date(b.applyDate).getTime() - new Date(a.applyDate).getTime())
+    },
+
+    getApprovalHistory: (filters = {}) => {
+      const state = get()
+      const result: Array<{ type: 'outbound' | 'quota'; record: OutboundRecord | QuotaApplication }> = []
+
+      const { merchantId, status, startDate, endDate, type } = filters
+
+      if (type !== 'quota') {
+        for (const r of state.outboundRecords) {
+          if (merchantId && r.merchantId !== merchantId) continue
+          if (status && r.status !== status) continue
+          if (startDate && r.outboundDate < startDate) continue
+          if (endDate && r.outboundDate > endDate) continue
+          result.push({ type: 'outbound', record: r })
+        }
+      }
+
+      if (type !== 'outbound') {
+        for (const a of state.quotaApplications) {
+          if (merchantId && a.merchantId !== merchantId) continue
+          if (status && a.status !== status) continue
+          if (startDate && a.applyDate < startDate) continue
+          if (endDate && a.applyDate > endDate) continue
+          result.push({ type: 'quota', record: a })
+        }
+      }
+
+      result.sort((a, b) => {
+        const dateA = a.type === 'outbound'
+          ? (a.record as OutboundRecord).reviewDate || (a.record as OutboundRecord).outboundDate
+          : (a.record as QuotaApplication).reviewDate || (a.record as QuotaApplication).applyDate
+        const dateB = b.type === 'outbound'
+          ? (b.record as OutboundRecord).reviewDate || (b.record as OutboundRecord).outboundDate
+          : (b.record as QuotaApplication).reviewDate || (b.record as QuotaApplication).applyDate
+        return new Date(dateB).getTime() - new Date(dateA).getTime()
+      })
+
+      return result
     }
   }
 })

@@ -7,15 +7,18 @@ interface QuotaBarProps {
   used: number
   base: number
   approved?: number
+  pendingUsed?: number
   showText?: boolean
 }
 
-const QuotaBar: React.FC<QuotaBarProps> = ({ used, base, approved = 0, showText = true }) => {
+const QuotaBar: React.FC<QuotaBarProps> = ({ used, base, approved = 0, pendingUsed = 0, showText = true }) => {
   const total = base + approved
-  const percentage = total > 0 ? Math.min((used / total) * 100, 100) : 0
+  const usedPercentage = total > 0 ? Math.min((used / total) * 100, 100) : 0
+  const pendingPercentage = total > 0 ? Math.min((pendingUsed / total) * 100, 100) : 0
+  const combinedPercentage = Math.min(usedPercentage + pendingPercentage, 100)
   const basePercentage = total > 0 ? Math.min((base / total) * 100, 100) : 0
-  const isExhausted = percentage >= 100
-  const isWarning = percentage >= 80 && percentage < 100
+  const isExhausted = combinedPercentage >= 100
+  const isWarning = combinedPercentage >= 80 && combinedPercentage < 100
 
   return (
     <View className={styles.container}>
@@ -28,9 +31,14 @@ const QuotaBar: React.FC<QuotaBarProps> = ({ used, base, approved = 0, showText 
                 <Text className={styles.approvedText}>含追加 +{approved}吨</Text>
               </View>
             )}
+            {pendingUsed > 0 && (
+              <View className={styles.pendingTag}>
+                <Text className={styles.pendingText}>待使用 {pendingUsed.toFixed(0)}吨</Text>
+              </View>
+            )}
           </View>
           <Text className={styles.value}>
-            {used.toFixed(0)}/{total.toFixed(0)} 吨
+            {used.toFixed(0)} + {pendingUsed.toFixed(0)} / {total.toFixed(0)} 吨
           </Text>
         </View>
       )}
@@ -45,8 +53,22 @@ const QuotaBar: React.FC<QuotaBarProps> = ({ used, base, approved = 0, showText 
             isWarning && styles.warningStyle,
             !isExhausted && !isWarning && styles.normal
           )}
-          style={{ width: `${percentage}%` }}
+          style={{ width: `${usedPercentage}%` }}
         />
+        {pendingPercentage > 0 && (
+          <View
+            className={classnames(
+              styles.pendingFill,
+              isExhausted && styles.exhausted,
+              isWarning && styles.warningStyle,
+              !isExhausted && !isWarning && styles.pendingNormal
+            )}
+            style={{
+              width: `${pendingPercentage}%`,
+              left: `${usedPercentage}%`
+            }}
+          />
+        )}
       </View>
       {showText && (
         <Text className={classnames(
@@ -54,7 +76,7 @@ const QuotaBar: React.FC<QuotaBarProps> = ({ used, base, approved = 0, showText 
           isExhausted && styles.danger,
           isWarning && styles.warn
         )}>
-          {percentage.toFixed(1)}%
+          {combinedPercentage.toFixed(1)}%
         </Text>
       )}
     </View>

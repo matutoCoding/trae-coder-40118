@@ -32,12 +32,9 @@ const OutboundDetailPage: React.FC = () => {
     Taro.navigateTo({ url: `/pages/batchDetail/index?id=${batchId}` })
   }
 
-  const renderDeductionItem = (deduction: PlannedDeduction, clickable: boolean) => (
+  const renderPlannedDeductionItem = (deduction: PlannedDeduction) => (
     <View className={styles.deductionItem} key={deduction.batchId}>
-      <Text
-        className={classnames(styles.deductionBatchNo, clickable && styles.deductionBatchNoClickable)}
-        onClick={clickable ? () => handleBatchClick(deduction.batchId) : undefined}
-      >
+      <Text className={styles.deductionBatchNo}>
         {deduction.batchNo}
       </Text>
       <View className={styles.deductionDetail}>
@@ -56,6 +53,31 @@ const OutboundDetailPage: React.FC = () => {
         <View className={styles.infoRow}>
           <Text className={styles.infoLabel}>到期日期</Text>
           <Text className={styles.infoValue}>{deduction.expiryDate}</Text>
+        </View>
+        <View className={styles.infoRow}>
+          <Text className={styles.infoLabel}>扣减数量</Text>
+          <Text className={styles.infoValue}>{deduction.deductQuantity} {deduction.unit}</Text>
+        </View>
+      </View>
+    </View>
+  )
+
+  const renderActualDeductionItem = (deduction: PlannedDeduction) => (
+    <View className={styles.deductionItem} key={deduction.batchId}>
+      <Text
+        className={classnames(styles.deductionBatchNo, styles.deductionBatchNoClickable)}
+        onClick={() => handleBatchClick(deduction.batchId)}
+      >
+        {deduction.batchNo}
+      </Text>
+      <View className={styles.deductionDetail}>
+        <View className={styles.infoRow}>
+          <Text className={styles.infoLabel}>粮食品种</Text>
+          <Text className={styles.infoValue}>{deduction.grainType}</Text>
+        </View>
+        <View className={styles.infoRow}>
+          <Text className={styles.infoLabel}>仓号</Text>
+          <Text className={styles.infoValue}>{deduction.warehouseNo}</Text>
         </View>
         <View className={styles.infoRow}>
           <Text className={styles.infoLabel}>扣减数量</Text>
@@ -130,7 +152,7 @@ const OutboundDetailPage: React.FC = () => {
           <View className={styles.section}>
             <Text className={styles.sectionTitle}>计划扣减</Text>
             <View className={styles.deductionList}>
-              {record.plannedDeductions.map((d) => renderDeductionItem(d, false))}
+              {record.plannedDeductions.map((d) => renderPlannedDeductionItem(d))}
             </View>
           </View>
         )}
@@ -139,7 +161,7 @@ const OutboundDetailPage: React.FC = () => {
           <View className={styles.section}>
             <Text className={styles.sectionTitle}>实际扣减</Text>
             <View className={styles.deductionList}>
-              {record.actualDeductions.map((d) => renderDeductionItem(d, true))}
+              {record.actualDeductions.map((d) => renderActualDeductionItem(d))}
             </View>
           </View>
         )}

@@ -86,6 +86,33 @@ const HomePage: React.FC = () => {
           />
         </View>
 
+        <View className={styles.quickActions}>
+          <View
+            className={styles.quickActionCard}
+            onClick={() => Taro.navigateTo({ url: '/pages/approvalHistory/index' })}
+          >
+            <Text className={styles.quickActionIcon}>📋</Text>
+            <View className={styles.quickActionContent}>
+              <Text className={styles.quickActionTitle}>审批历史</Text>
+              <Text className={styles.quickActionDesc}>出库&额度申请审批台账</Text>
+            </View>
+            <Text className={styles.quickActionArrow}>›</Text>
+          </View>
+          <View
+            className={styles.quickActionCard}
+            onClick={() => Taro.switchTab({ url: '/pages/outbound/index' })}
+          >
+            <Text className={styles.quickActionIcon}>✅</Text>
+            <View className={styles.quickActionContent}>
+              <Text className={styles.quickActionTitle}>待审出库</Text>
+              <Text className={styles.quickActionDesc}>
+                {outboundRecords.filter((r) => r.status === 'pending').length} 条待处理
+              </Text>
+            </View>
+            <Text className={styles.quickActionArrow}>›</Text>
+          </View>
+        </View>
+
         <View className={styles.quotaOverview}>
           <View className={styles.sectionHeader}>
             <Text className={styles.sectionTitle}>当季额度总览</Text>

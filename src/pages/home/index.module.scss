@@ -33,6 +33,55 @@
   margin-bottom: $spacing-xl;
 }
 
+.quickActions {
+  display: flex;
+  gap: $spacing-md;
+  margin-bottom: $spacing-xl;
+}
+
+.quickActionCard {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  gap: $spacing-md;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.quickActionIcon {
+  font-size: 48rpx;
+}
+
+.quickActionContent {
+  flex: 1;
+}
+
+.quickActionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: block;
+}
+
+.quickActionDesc {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+  display: block;
+}
+
+.quickActionArrow {
+  font-size: 32rpx;
+  color: #B0B0B0;
+  font-weight: $font-weight-bold;
+}
+
 .quotaOverview {
   background-color: $color-bg-card;
   border-radius: $radius-lg;

@@ -59,6 +59,7 @@ export interface MerchantQuota {
   year: number
   baseQuota: number
   used: number
+  pendingUsed: number
   approved?: number
   unit: string
   status: 'active' | 'exhausted' | 'expired'
