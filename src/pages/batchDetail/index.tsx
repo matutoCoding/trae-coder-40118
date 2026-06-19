@@ -115,34 +115,37 @@ const BatchDetailPage: React.FC = () => {
     }
 
     const relatedOutbound = outboundRecords.filter((r) =>
-      r.plannedDeductions.some((d) => d.batchNo === batch.batchNo)
+      r.plannedDeductions.some((d) => d.batchId === batch.id) ||
+      r.actualDeductions.some((d) => d.batchId === batch.id)
     )
 
     for (const record of relatedOutbound) {
-      const plan = record.plannedDeductions.find((d) => d.batchNo === batch.batchNo)
+      const plan = record.plannedDeductions.find((d) => d.batchId === batch.id)
       const planQty = plan ? plan.deductQuantity : 0
 
-      events.push({
-        id: `${record.id}_apply`,
-        date: record.outboundDate,
-        timestamp: new Date(record.outboundDate).getTime(),
-        eventType: 'outbound_apply',
-        dotClass: classnames(
-          styles.timelineDot,
-          record.status === 'pending' && styles.timelineDotPending
-        ),
-        outboundId: record.id,
-        content: (
-          <View>
-            <Text className={styles.timelineEvent}>
-              出库申请 · {getOutboundStatusText(record.status)}
-            </Text>
-            <Text className={styles.timelineDate}>
-              {record.merchantName} · 计划{planQty}{record.unit} · {record.outboundDate}
-            </Text>
-          </View>
-        )
-      })
+      if (plan) {
+        events.push({
+          id: `${record.id}_apply`,
+          date: record.outboundDate,
+          timestamp: new Date(record.outboundDate).getTime(),
+          eventType: 'outbound_apply',
+          dotClass: classnames(
+            styles.timelineDot,
+            record.status === 'pending' && styles.timelineDotPending
+          ),
+          outboundId: record.id,
+          content: (
+            <View>
+              <Text className={styles.timelineEvent}>
+                出库申请 · {getOutboundStatusText(record.status)}
+              </Text>
+              <Text className={styles.timelineDate}>
+                {record.merchantName} · 计划{planQty}{record.unit} · {record.outboundDate}
+              </Text>
+            </View>
+          )
+        })
+      }
 
       if ((record.status === 'completed' || record.status === 'rejected') && record.reviewDate) {
         events.push({
@@ -171,7 +174,7 @@ const BatchDetailPage: React.FC = () => {
       }
 
       if (record.status === 'completed') {
-        const actual = record.actualDeductions.find((d) => d.batchNo === batch.batchNo)
+        const actual = record.actualDeductions.find((d) => d.batchId === batch.id)
         if (actual) {
           events.push({
             id: `${record.id}_actual`,

@@ -203,6 +203,7 @@ interface GrainStore {
   getPendingOutbound: () => OutboundRecord[]
   getPendingQuotaApplications: () => QuotaApplication[]
   getCompletedOutbound: () => OutboundRecord[]
+  getQuotaApplicationById: (id: string) => QuotaApplication | undefined
   getApprovalHistory: (filters?: { merchantId?: string; status?: string; startDate?: string; endDate?: string; type?: 'outbound' | 'quota' }) => Array<{ type: 'outbound' | 'quota'; record: OutboundRecord | QuotaApplication }>
 }
 
@@ -213,7 +214,51 @@ export const useGrainStore = create<GrainStore>((set, get) => {
     quotas: ensureQuotasExist(mockQuotas),
     merchants: MERCHANT_TEMPLATE,
     inspections: mockInspections,
-    quotaApplications: [],
+    quotaApplications: [
+      {
+        id: 'QA001',
+        merchantId: 'M002',
+        merchantName: '中粮饲料公司',
+        applyQuota: 100,
+        unit: '吨',
+        reason: '季度采购计划增加，原额度不够使用',
+        status: 'approved',
+        applyDate: '2026-06-02',
+        reviewDate: '2026-06-03',
+        reviewer: '赵主管',
+        reviewRemark: '情况属实，同意追加',
+        quotaBefore: 800,
+        quotaAfter: 900
+      },
+      {
+        id: 'QA002',
+        merchantId: 'M003',
+        merchantName: '湘米加工厂',
+        applyQuota: 50,
+        unit: '吨',
+        reason: '新签客户订单增加',
+        status: 'pending',
+        applyDate: '2026-06-18',
+        reviewDate: '',
+        reviewer: '',
+        reviewRemark: ''
+      },
+      {
+        id: 'QA003',
+        merchantId: 'M006',
+        merchantName: '金龙粮油有限公司',
+        applyQuota: 200,
+        unit: '吨',
+        reason: '临期促销活动备货',
+        status: 'rejected',
+        applyDate: '2026-06-08',
+        reviewDate: '2026-06-09',
+        reviewer: '赵主管',
+        reviewRemark: '近期提货量偏低，暂不同意追加额度',
+        quotaBefore: 350,
+        quotaAfter: 350
+      }
+    ],
 
     ensureCurrentQuarter: () => {
       set((state) => ({
@@ -353,19 +398,34 @@ export const useGrainStore = create<GrainStore>((set, get) => {
         const now = dayjs().format('YYYY-MM-DD')
 
         if (approved) {
-          let remainingToDeduct = record.quantity
           const newBatches = state.batches.map((b) => ({ ...b }))
           const actualDeductions: PlannedDeduction[] = []
+          let shortfall = ''
 
           for (const plan of record.plannedDeductions) {
-            if (remainingToDeduct <= 0) break
             const idx = newBatches.findIndex((b) => b.id === plan.batchId)
-            if (idx === -1) continue
+            if (idx === -1) {
+              shortfall = `批次 ${plan.batchNo} 不存在`
+              break
+            }
             const b = newBatches[idx]
-            const deduct = Math.min(b.remainingQuantity, remainingToDeduct)
-            newBatches[idx] = { ...b, remainingQuantity: b.remainingQuantity - deduct }
-            actualDeductions.push({ ...plan, deductQuantity: deduct })
-            remainingToDeduct -= deduct
+            if (b.remainingQuantity < plan.deductQuantity) {
+              shortfall = `批次 ${plan.batchNo} 仅剩 ${b.remainingQuantity}${b.unit}，不足拟扣 ${plan.deductQuantity}${b.unit}`
+              break
+            }
+            newBatches[idx] = { ...b, remainingQuantity: b.remainingQuantity - plan.deductQuantity }
+            actualDeductions.push({ ...plan, deductQuantity: plan.deductQuantity })
+          }
+
+          if (shortfall) {
+            console.warn('[Store] reviewOutbound 实际扣减失败:', { outboundNo: record.outboundNo, shortfall })
+            const { plan: newPlan } = computeFifoPlan(state.batches, pendingList, record.quantity, record.id)
+            if (newPlan.reduce((s, p) => s + p.deductQuantity, 0) < record.quantity) {
+              resolve({ success: false, message: `${shortfall}，且已无法重新生成可用扣减方案`, needRegenerate: true })
+            } else {
+              resolve({ success: false, message: `${shortfall}，请重新生成扣减方案`, needRegenerate: true, newPlan })
+            }
+            return
           }
 
           newRecords[recordIdx] = {
@@ -633,13 +693,6 @@ export const useGrainStore = create<GrainStore>((set, get) => {
 
         const now = dayjs().format('YYYY-MM-DD')
         const newApps = [...state.quotaApplications]
-        newApps[appIdx] = {
-          ...app,
-          status: approved ? 'approved' : 'rejected',
-          reviewDate: now,
-          reviewer,
-          reviewRemark
-        }
 
         if (approved) {
           const { year, quarter } = getCurrentQuarter()
@@ -650,13 +703,25 @@ export const useGrainStore = create<GrainStore>((set, get) => {
           if (quotaIdx !== -1) {
             const newQuotas = [...ensuredQuotas]
             const quota = { ...newQuotas[quotaIdx] }
+            const beforeTotal = quota.baseQuota + (quota.approved || 0)
             quota.approved = (quota.approved || 0) + app.applyQuota
-            const totalForQuota = quota.baseQuota + (quota.approved || 0)
+            const afterTotal = quota.baseQuota + (quota.approved || 0)
+            const totalForQuota = afterTotal
             const totalOccupied = quota.used + quota.pendingUsed
             if (totalOccupied < totalForQuota && quota.status === 'exhausted') {
               quota.status = 'active'
             }
             newQuotas[quotaIdx] = quota
+
+            newApps[appIdx] = {
+              ...app,
+              status: 'approved',
+              reviewDate: now,
+              reviewer,
+              reviewRemark,
+              quotaBefore: beforeTotal,
+              quotaAfter: afterTotal
+            }
 
             const otherQuotas = state.quotas.filter(
               (q) => !(q.year === year && q.quarter === quarter && q.status !== 'expired')
@@ -666,10 +731,32 @@ export const useGrainStore = create<GrainStore>((set, get) => {
               quotas: [...otherQuotas, ...newQuotas]
             })
           } else {
+            newApps[appIdx] = {
+              ...app,
+              status: 'approved',
+              reviewDate: now,
+              reviewer,
+              reviewRemark
+            }
             set({ quotaApplications: newApps })
           }
           console.info('[Store] reviewQuotaApplication 通过:', { appId, applyQuota: app.applyQuota })
         } else {
+          const { year, quarter } = getCurrentQuarter()
+          const ensuredQuotas = ensureQuotasExist(state.quotas)
+          const quota = ensuredQuotas.find(
+            (q) => q.merchantId === app.merchantId && q.year === year && q.quarter === quarter && q.status !== 'expired'
+          )
+          const currentTotal = quota ? quota.baseQuota + (quota.approved || 0) : 0
+          newApps[appIdx] = {
+            ...app,
+            status: 'rejected',
+            reviewDate: now,
+            reviewer,
+            reviewRemark,
+            quotaBefore: currentTotal,
+            quotaAfter: currentTotal
+          }
           set({ quotaApplications: newApps })
           console.info('[Store] reviewQuotaApplication 驳回:', { appId })
         }
@@ -683,6 +770,11 @@ export const useGrainStore = create<GrainStore>((set, get) => {
       return state.quotaApplications
         .filter((a) => a.status === 'pending')
         .sort((a, b) => new Date(b.applyDate).getTime() - new Date(a.applyDate).getTime())
+    },
+
+    getQuotaApplicationById: (id) => {
+      const state = get()
+      return state.quotaApplications.find((a) => a.id === id)
     },
 
     getApprovalHistory: (filters = {}) => {

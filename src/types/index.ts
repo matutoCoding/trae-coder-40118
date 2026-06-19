@@ -104,4 +104,6 @@ export interface QuotaApplication {
   reviewDate: string
   reviewer: string
   reviewRemark: string
+  quotaBefore?: number
+  quotaAfter?: number
 }

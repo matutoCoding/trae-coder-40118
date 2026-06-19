@@ -1,7 +1,7 @@
 import { OutboundRecord } from '@/types'
 
-const emptyDeductions = []
-const emptyRiskHints = []
+const emptyDeductions: any[] = []
+const emptyRiskHints: string[] = []
 
 export const mockOutboundRecords: OutboundRecord[] = [
   {
@@ -16,10 +16,14 @@ export const mockOutboundRecords: OutboundRecord[] = [
     outboundDate: '2026-06-15',
     status: 'completed',
     operator: '张明',
-    quotaId: 'Q001',
+    quotaId: 'Q2026Q2_M001',
     remark: '',
-    plannedDeductions: [{ batchId: 'B001', batchNo: 'PK2026Q1-001', grainType: '小麦', warehouseNo: 'A-01', inboundDate: '2026-01-15', expiryDate: '2027-01-15', deductQuantity: 50, unit: '吨' }],
-    actualDeductions: [{ batchId: 'B001', batchNo: 'PK2026Q1-001', grainType: '小麦', warehouseNo: 'A-01', inboundDate: '2026-01-15', expiryDate: '2027-01-15', deductQuantity: 50, unit: '吨' }],
+    plannedDeductions: [
+      { batchId: 'B001', batchNo: 'PK2026Q1-001', grainType: '小麦', warehouseNo: 'A-01', inboundDate: '2025-07-15', expiryDate: '2026-07-15', deductQuantity: 50, unit: '吨' }
+    ],
+    actualDeductions: [
+      { batchId: 'B001', batchNo: 'PK2026Q1-001', grainType: '小麦', warehouseNo: 'A-01', inboundDate: '2025-07-15', expiryDate: '2026-07-15', deductQuantity: 50, unit: '吨' }
+    ],
     reviewDate: '2026-06-15',
     reviewer: '赵主管',
     reviewRemark: '同意出库',
@@ -38,10 +42,14 @@ export const mockOutboundRecords: OutboundRecord[] = [
     outboundDate: '2026-06-16',
     status: 'completed',
     operator: '李华',
-    quotaId: 'Q002',
+    quotaId: 'Q2026Q2_M002',
     remark: '',
-    plannedDeductions: [{ batchId: 'B002', batchNo: 'PK2026Q1-002', grainType: '玉米', warehouseNo: 'B-03', inboundDate: '2026-02-10', expiryDate: '2027-02-10', deductQuantity: 80, unit: '吨' }],
-    actualDeductions: [{ batchId: 'B002', batchNo: 'PK2026Q1-002', grainType: '玉米', warehouseNo: 'B-03', inboundDate: '2026-02-10', expiryDate: '2027-02-10', deductQuantity: 80, unit: '吨' }],
+    plannedDeductions: [
+      { batchId: 'B002', batchNo: 'PK2026Q1-002', grainType: '玉米', warehouseNo: 'B-03', inboundDate: '2025-08-20', expiryDate: '2026-08-20', deductQuantity: 80, unit: '吨' }
+    ],
+    actualDeductions: [
+      { batchId: 'B002', batchNo: 'PK2026Q1-002', grainType: '玉米', warehouseNo: 'B-03', inboundDate: '2025-08-20', expiryDate: '2026-08-20', deductQuantity: 80, unit: '吨' }
+    ],
     reviewDate: '2026-06-16',
     reviewer: '赵主管',
     reviewRemark: '',
@@ -60,15 +68,17 @@ export const mockOutboundRecords: OutboundRecord[] = [
     outboundDate: '2026-06-17',
     status: 'pending',
     operator: '王芳',
-    quotaId: 'Q003',
+    quotaId: 'Q2026Q2_M003',
     remark: '临期批次优先出库',
-    plannedDeductions: [{ batchId: 'B005', batchNo: 'PK2025Q3-005', grainType: '稻谷', warehouseNo: 'C-02', inboundDate: '2025-09-20', expiryDate: '2026-07-20', deductQuantity: 30, unit: '吨' }],
+    plannedDeductions: [
+      { batchId: 'B007', batchNo: 'PK2025Q3-005', grainType: '稻谷', warehouseNo: 'C-01', inboundDate: '2025-06-10', expiryDate: '2026-06-10', deductQuantity: 30, unit: '吨' }
+    ],
     actualDeductions: emptyDeductions,
     reviewDate: '',
     reviewer: '',
     reviewRemark: '',
     quotaOccupied: 30,
-    riskHints: ['涉及临期批次PK2025Q3-005，距到期仅剩约30天']
+    riskHints: ['涉及临期批次PK2025Q3-005，距到期已不足30天']
   },
   {
     id: 'OB004',
@@ -82,10 +92,14 @@ export const mockOutboundRecords: OutboundRecord[] = [
     outboundDate: '2026-06-18',
     status: 'completed',
     operator: '张明',
-    quotaId: 'Q001',
+    quotaId: 'Q2026Q2_M001',
     remark: '',
-    plannedDeductions: [{ batchId: 'B006', batchNo: 'PK2026Q2-001', grainType: '大豆', warehouseNo: 'A-03', inboundDate: '2026-04-05', expiryDate: '2027-04-05', deductQuantity: 20, unit: '吨' }],
-    actualDeductions: [{ batchId: 'B006', batchNo: 'PK2026Q2-001', grainType: '大豆', warehouseNo: 'A-03', inboundDate: '2026-04-05', expiryDate: '2027-04-05', deductQuantity: 20, unit: '吨' }],
+    plannedDeductions: [
+      { batchId: 'B005', batchNo: 'PK2026Q2-001', grainType: '大豆', warehouseNo: 'D-01', inboundDate: '2026-01-15', expiryDate: '2027-01-15', deductQuantity: 20, unit: '吨' }
+    ],
+    actualDeductions: [
+      { batchId: 'B005', batchNo: 'PK2026Q2-001', grainType: '大豆', warehouseNo: 'D-01', inboundDate: '2026-01-15', expiryDate: '2027-01-15', deductQuantity: 20, unit: '吨' }
+    ],
     reviewDate: '2026-06-18',
     reviewer: '赵主管',
     reviewRemark: '',
@@ -104,11 +118,11 @@ export const mockOutboundRecords: OutboundRecord[] = [
     outboundDate: '2026-06-19',
     status: 'pending',
     operator: '刘强',
-    quotaId: 'Q004',
+    quotaId: 'Q2026Q2_M004',
     remark: '大额出库待审',
     plannedDeductions: [
-      { batchId: 'B001', batchNo: 'PK2026Q1-001', grainType: '小麦', warehouseNo: 'A-01', inboundDate: '2026-01-15', expiryDate: '2027-01-15', deductQuantity: 50, unit: '吨' },
-      { batchId: 'B004', batchNo: 'PK2026Q1-004', grainType: '小麦', warehouseNo: 'A-02', inboundDate: '2026-03-01', expiryDate: '2027-03-01', deductQuantity: 10, unit: '吨' }
+      { batchId: 'B001', batchNo: 'PK2026Q1-001', grainType: '小麦', warehouseNo: 'A-01', inboundDate: '2025-07-15', expiryDate: '2026-07-15', deductQuantity: 50, unit: '吨' },
+      { batchId: 'B008', batchNo: 'PK2026Q2-003', grainType: '小麦', warehouseNo: 'A-03', inboundDate: '2026-03-05', expiryDate: '2027-03-05', deductQuantity: 10, unit: '吨' }
     ],
     actualDeductions: emptyDeductions,
     reviewDate: '',
@@ -129,10 +143,14 @@ export const mockOutboundRecords: OutboundRecord[] = [
     outboundDate: '2026-06-10',
     status: 'completed',
     operator: '李华',
-    quotaId: 'Q002',
+    quotaId: 'Q2026Q2_M002',
     remark: '',
-    plannedDeductions: [{ batchId: 'B007', batchNo: 'PK2026Q2-002', grainType: '玉米', warehouseNo: 'B-01', inboundDate: '2026-05-10', expiryDate: '2027-05-10', deductQuantity: 45, unit: '吨' }],
-    actualDeductions: [{ batchId: 'B007', batchNo: 'PK2026Q2-002', grainType: '玉米', warehouseNo: 'B-01', inboundDate: '2026-05-10', expiryDate: '2027-05-10', deductQuantity: 45, unit: '吨' }],
+    plannedDeductions: [
+      { batchId: 'B006', batchNo: 'PK2026Q2-002', grainType: '玉米', warehouseNo: 'B-01', inboundDate: '2026-02-20', expiryDate: '2027-02-20', deductQuantity: 45, unit: '吨' }
+    ],
+    actualDeductions: [
+      { batchId: 'B006', batchNo: 'PK2026Q2-002', grainType: '玉米', warehouseNo: 'B-01', inboundDate: '2026-02-20', expiryDate: '2027-02-20', deductQuantity: 45, unit: '吨' }
+    ],
     reviewDate: '2026-06-10',
     reviewer: '赵主管',
     reviewRemark: '',
@@ -151,9 +169,11 @@ export const mockOutboundRecords: OutboundRecord[] = [
     outboundDate: '2026-06-05',
     status: 'rejected',
     operator: '王芳',
-    quotaId: 'Q003',
+    quotaId: 'Q2026Q2_M003',
     remark: '额度不足，已转申请',
-    plannedDeductions: [{ batchId: 'B008', batchNo: 'PK2026Q2-003', grainType: '小麦', warehouseNo: 'A-04', inboundDate: '2026-05-20', expiryDate: '2027-05-20', deductQuantity: 25, unit: '吨' }],
+    plannedDeductions: [
+      { batchId: 'B008', batchNo: 'PK2026Q2-003', grainType: '小麦', warehouseNo: 'A-03', inboundDate: '2026-03-05', expiryDate: '2027-03-05', deductQuantity: 25, unit: '吨' }
+    ],
     actualDeductions: emptyDeductions,
     reviewDate: '2026-06-05',
     reviewer: '赵主管',
@@ -173,10 +193,14 @@ export const mockOutboundRecords: OutboundRecord[] = [
     outboundDate: '2026-06-12',
     status: 'completed',
     operator: '赵刚',
-    quotaId: 'Q005',
+    quotaId: 'Q2026Q2_M005',
     remark: '',
-    plannedDeductions: [{ batchId: 'B003', batchNo: 'PK2026Q1-003', grainType: '稻谷', warehouseNo: 'C-01', inboundDate: '2026-02-28', expiryDate: '2027-02-28', deductQuantity: 35, unit: '吨' }],
-    actualDeductions: [{ batchId: 'B003', batchNo: 'PK2026Q1-003', grainType: '稻谷', warehouseNo: 'C-01', inboundDate: '2026-02-28', expiryDate: '2027-02-28', deductQuantity: 35, unit: '吨' }],
+    plannedDeductions: [
+      { batchId: 'B003', batchNo: 'PK2026Q1-003', grainType: '稻谷', warehouseNo: 'C-02', inboundDate: '2025-09-10', expiryDate: '2026-09-10', deductQuantity: 35, unit: '吨' }
+    ],
+    actualDeductions: [
+      { batchId: 'B003', batchNo: 'PK2026Q1-003', grainType: '稻谷', warehouseNo: 'C-02', inboundDate: '2025-09-10', expiryDate: '2026-09-10', deductQuantity: 35, unit: '吨' }
+    ],
     reviewDate: '2026-06-12',
     reviewer: '赵主管',
     reviewRemark: '',

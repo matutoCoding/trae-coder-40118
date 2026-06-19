@@ -66,7 +66,7 @@ const ApprovalHistoryPage: React.FC = () => {
       Taro.navigateTo({ url: `/pages/outboundDetail/index?id=${record.id}` })
     } else {
       const record = item.record as QuotaApplication
-      Taro.navigateTo({ url: `/pages/outboundDetail/index?id=${record.id}` })
+      Taro.navigateTo({ url: `/pages/quotaApplicationDetail/index?id=${record.id}` })
     }
   }
 

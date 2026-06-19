@@ -8,6 +8,7 @@ export default defineAppConfig({
     'pages/batchDetail/index',
     'pages/outboundDetail/index',
     'pages/quotaApply/index',
+    'pages/quotaApplicationDetail/index',
     'pages/inspection/index',
     'pages/warning/index',
     'pages/consumption/index',
