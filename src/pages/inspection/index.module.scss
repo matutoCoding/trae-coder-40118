@@ -1,0 +1,95 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: 40rpx;
+}
+
+.filterBar {
+  display: flex;
+  padding: $spacing-sm $page-padding;
+  background-color: $color-bg-card;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.filterItem {
+  padding: $spacing-xs $spacing-md;
+  margin-right: $spacing-sm;
+  border-radius: $radius-round;
+  background-color: $color-bg-page;
+  transition: all $transition-base;
+}
+
+.filterItemActive {
+  background-color: #2D7D46;
+}
+
+.filterText {
+  font-size: $font-size-sm;
+  white-space: nowrap;
+  color: $color-text-secondary;
+}
+
+.filterTextActive {
+  color: $color-text-white;
+}
+
+.list {
+  padding: $spacing-md $page-padding;
+}
+
+.inspectionCard {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  border-left: 8rpx solid #2D7D46;
+
+  &:active {
+    opacity: 0.95;
+  }
+}
+
+.inspectionCardFail {
+  border-left-color: #D93025;
+}
+
+.inspectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.inspectionBatchNo {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.inspectionBody {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  padding-top: $spacing-sm;
+  border-top: 1rpx solid $color-divider;
+}
+
+.inspectionInfoItem {
+  display: flex;
+  align-items: center;
+}
+
+.inspectionInfoLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-right: 8rpx;
+}
+
+.inspectionInfoValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}

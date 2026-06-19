@@ -1,0 +1,49 @@
+@use '@/styles/variables.scss' as *;
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-lg 0;
+  background-color: $color-bg-card;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card;
+}
+
+.value {
+  font-size: 48rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  line-height: 1.2;
+}
+
+.unit {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-left: 4rpx;
+}
+
+.label {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-top: $spacing-xs;
+}
+
+.primary {
+  .value {
+    color: #2D7D46;
+  }
+}
+
+.warning {
+  .value {
+    color: #C88600;
+  }
+}
+
+.danger {
+  .value {
+    color: #D93025;
+  }
+}

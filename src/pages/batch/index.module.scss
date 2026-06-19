@@ -1,0 +1,82 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: 120rpx;
+}
+
+.searchBar {
+  padding: $spacing-md $page-padding;
+  background-color: $color-bg-card;
+}
+
+.searchInput {
+  width: 100%;
+  height: 72rpx;
+  background-color: $color-bg-page;
+  border-radius: $radius-round;
+  padding: 0 $spacing-lg;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.filterBar {
+  display: flex;
+  padding: $spacing-sm $page-padding;
+  background-color: $color-bg-card;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.filterItem {
+  padding: $spacing-xs $spacing-md;
+  margin-right: $spacing-sm;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  background-color: $color-bg-page;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.filterItemActive {
+  background-color: #2D7D46;
+  color: $color-text-white;
+}
+
+.filterText {
+  font-size: $font-size-sm;
+  white-space: nowrap;
+}
+
+.listContainer {
+  padding: $spacing-md $page-padding 0;
+}
+
+.fabButton {
+  position: fixed;
+  right: 48rpx;
+  bottom: 160rpx;
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, #2D7D46 0%, #3D9D56 100%);
+  @include flex-center;
+  box-shadow: 0 8rpx 24rpx rgba(45, 125, 70, 0.35);
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.95);
+  }
+}
+
+.fabText {
+  font-size: 52rpx;
+  color: $color-text-white;
+  line-height: 1;
+}

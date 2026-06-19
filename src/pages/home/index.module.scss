@@ -1,0 +1,259 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #2D7D46 0%, #F5F3EE 360rpx);
+  padding-bottom: $spacing-xl;
+}
+
+.heroSection {
+  padding: $spacing-lg $page-padding;
+  margin-bottom: $spacing-sm;
+}
+
+.heroTitle {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-white;
+  margin-bottom: $spacing-xs;
+}
+
+.heroSubtitle {
+  font-size: $font-size-md;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.statsGrid {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 $page-padding;
+  margin-bottom: $spacing-lg;
+}
+
+.statItem {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-md;
+  padding: $spacing-md 0;
+  margin: 0 6rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  backdrop-filter: blur(10px);
+}
+
+.statRow {
+  display: flex;
+  align-items: baseline;
+}
+
+.statValue {
+  font-size: 44rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-white;
+}
+
+.statUnit {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.7);
+  margin-left: 2rpx;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 4rpx;
+}
+
+.section {
+  padding: 0 $page-padding;
+  margin-bottom: $spacing-lg;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.sectionMore {
+  font-size: $font-size-sm;
+  color: #2D7D46;
+}
+
+.quickActions {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 $page-padding;
+  margin-bottom: $spacing-lg;
+}
+
+.actionItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 160rpx;
+  height: 160rpx;
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.97);
+  }
+}
+
+.actionIcon {
+  font-size: 48rpx;
+  margin-bottom: $spacing-xs;
+}
+
+.actionText {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.warningCard {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  margin-bottom: $spacing-md;
+}
+
+.warningHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.warningDot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: $radius-round;
+  background-color: #E8A838;
+  margin-right: $spacing-sm;
+}
+
+.dangerDot {
+  background-color: #D93025;
+}
+
+.warningTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.warningCount {
+  margin-left: auto;
+  font-size: $font-size-sm;
+  color: #D93025;
+  font-weight: $font-weight-medium;
+}
+
+.warningItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-sm 0;
+  border-bottom: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.warningBatchNo {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.warningInfo {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-top: 4rpx;
+}
+
+.warningDays {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
+}
+
+.warningDaysWarning {
+  color: #C88600;
+}
+
+.warningDaysDanger {
+  color: #D93025;
+}
+
+.recentCard {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.recentItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-sm 0;
+  border-bottom: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.recentIcon {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: $radius-md;
+  @include flex-center;
+  margin-right: $spacing-md;
+  font-size: 28rpx;
+}
+
+.recentIconOut {
+  background-color: rgba(45, 125, 70, 0.1);
+}
+
+.recentIconIn {
+  background-color: rgba(22, 93, 255, 0.1);
+}
+
+.recentContent {
+  flex: 1;
+}
+
+.recentTitle {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.recentDesc {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.recentTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  white-space: nowrap;
+}

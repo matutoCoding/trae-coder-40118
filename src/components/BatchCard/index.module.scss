@@ -1,0 +1,75 @@
+@use '@/styles/variables.scss' as *;
+
+.card {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.95;
+    transform: scale(0.99);
+  }
+}
+
+.header {
+  margin-bottom: $spacing-md;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+.batchNo {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  @include text-ellipsis;
+  max-width: 400rpx;
+}
+
+.grainType {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.body {
+  border-top: 1rpx solid $color-divider;
+  padding-top: $spacing-md;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6rpx 0;
+}
+
+.infoLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.infoValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.expiryLabel {
+  color: #D93025;
+}
+
+.expiryValue {
+  color: #D93025;
+}
+
+.daysLeft {
+  font-size: 20rpx;
+  color: #C88600;
+}

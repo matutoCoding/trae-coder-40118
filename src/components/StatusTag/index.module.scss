@@ -1,0 +1,106 @@
+@use '@/styles/variables.scss' as *;
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-xs;
+  white-space: nowrap;
+}
+
+.tagText {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+.small {
+  padding: 2rpx 12rpx;
+  .tagText {
+    font-size: 20rpx;
+  }
+}
+
+.normal {
+  background-color: rgba(45, 125, 70, 0.1);
+  .tagText {
+    color: #2D7D46;
+  }
+}
+
+.warning {
+  background-color: rgba(232, 168, 56, 0.12);
+  .tagText {
+    color: #C88600;
+  }
+}
+
+.expired {
+  background-color: rgba(217, 48, 37, 0.1);
+  .tagText {
+    color: #D93025;
+  }
+}
+
+.locked {
+  background-color: rgba(153, 153, 153, 0.15);
+  .tagText {
+    color: #999999;
+  }
+}
+
+.active {
+  background-color: rgba(45, 125, 70, 0.1);
+  .tagText {
+    color: #2D7D46;
+  }
+}
+
+.exhausted {
+  background-color: rgba(232, 168, 56, 0.12);
+  .tagText {
+    color: #C88600;
+  }
+}
+
+.pending {
+  background-color: rgba(22, 93, 255, 0.1);
+  .tagText {
+    color: #165DFF;
+  }
+}
+
+.approved {
+  background-color: rgba(45, 125, 70, 0.1);
+  .tagText {
+    color: #2D7D46;
+  }
+}
+
+.completed {
+  background-color: rgba(45, 125, 70, 0.1);
+  .tagText {
+    color: #2D7D46;
+  }
+}
+
+.rejected {
+  background-color: rgba(217, 48, 37, 0.1);
+  .tagText {
+    color: #D93025;
+  }
+}
+
+.pass {
+  background-color: rgba(45, 125, 70, 0.1);
+  .tagText {
+    color: #2D7D46;
+  }
+}
+
+.fail {
+  background-color: rgba(217, 48, 37, 0.1);
+  .tagText {
+    color: #D93025;
+  }
+}

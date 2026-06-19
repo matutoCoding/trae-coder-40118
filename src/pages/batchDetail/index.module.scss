@@ -1,0 +1,162 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: 40rpx;
+}
+
+.statusBanner {
+  padding: $spacing-lg $page-padding;
+  margin: $spacing-md $page-padding;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+}
+
+.statusBannerNormal {
+  background: linear-gradient(135deg, #2D7D46 0%, #3D9D56 100%);
+}
+
+.statusBannerWarning {
+  background: linear-gradient(135deg, #C88600 0%, #E8A838 100%);
+}
+
+.statusBannerExpired {
+  background: linear-gradient(135deg, #D93025 0%, #E84C3D 100%);
+}
+
+.statusBannerLocked {
+  background: linear-gradient(135deg, #999 0%, #bbb 100%);
+}
+
+.statusHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.statusTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-white;
+}
+
+.statusTag {
+  background-color: rgba(255, 255, 255, 0.25);
+  padding: 6rpx 20rpx;
+  border-radius: $radius-round;
+}
+
+.statusTagText {
+  font-size: $font-size-sm;
+  color: $color-text-white;
+  font-weight: $font-weight-medium;
+}
+
+.statusDesc {
+  font-size: $font-size-md;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.infoSection {
+  margin: $spacing-md $page-padding;
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.infoSectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  padding-left: $spacing-sm;
+  border-left: 6rpx solid #2D7D46;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-sm 0;
+  border-bottom: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.infoLabel {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+}
+
+.infoValue {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.expiryHighlight {
+  color: #D93025;
+}
+
+.timelineSection {
+  margin: $spacing-md $page-padding;
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.timelineTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  padding-left: $spacing-sm;
+  border-left: 6rpx solid #2D7D46;
+}
+
+.timelineItem {
+  display: flex;
+  padding-bottom: $spacing-md;
+  position: relative;
+}
+
+.timelineDot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: $radius-round;
+  background-color: #2D7D46;
+  margin-right: $spacing-md;
+  margin-top: 8rpx;
+  flex-shrink: 0;
+}
+
+.timelineContent {
+  flex: 1;
+}
+
+.timelineEvent {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.timelineDate {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.timelineLine {
+  position: absolute;
+  left: 9rpx;
+  top: 32rpx;
+  bottom: 0;
+  width: 2rpx;
+  background-color: $color-divider;
+}

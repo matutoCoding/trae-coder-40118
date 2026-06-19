@@ -1,0 +1,101 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: 40rpx;
+}
+
+.merchantCard {
+  margin: $spacing-md $page-padding;
+  background: linear-gradient(135deg, #2D7D46 0%, #1E5C32 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: 0 4rpx 16rpx rgba(45, 125, 70, 0.25);
+}
+
+.merchantName {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-white;
+  margin-bottom: $spacing-md;
+}
+
+.merchantStats {
+  display: flex;
+  justify-content: space-between;
+}
+
+.merchantStatItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.merchantStatValue {
+  font-size: 36rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-white;
+}
+
+.merchantStatLabel {
+  font-size: $font-size-xs;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 4rpx;
+}
+
+.list {
+  padding: 0 $page-padding;
+}
+
+.consumptionCard {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.consumptionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.consumptionNo {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.consumptionDate {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.consumptionBody {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  padding-top: $spacing-sm;
+  border-top: 1rpx solid $color-divider;
+}
+
+.consumptionInfo {
+  display: flex;
+  align-items: center;
+}
+
+.consumptionLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-right: 8rpx;
+}
+
+.consumptionValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}

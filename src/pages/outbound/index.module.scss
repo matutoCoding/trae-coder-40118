@@ -1,0 +1,227 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: 120rpx;
+}
+
+.tabs {
+  display: flex;
+  background-color: $color-bg-card;
+  padding: 0 $page-padding;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: $spacing-md 0;
+  position: relative;
+  transition: all $transition-base;
+}
+
+.tabText {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+}
+
+.tabActive {
+  .tabText {
+    color: #2D7D46;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.tabLine {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48rpx;
+  height: 6rpx;
+  border-radius: 3rpx;
+  background-color: #2D7D46;
+}
+
+.content {
+  padding: $spacing-md $page-padding;
+}
+
+.fifoSection {
+  margin-bottom: $spacing-lg;
+}
+
+.fifoHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.fifoIcon {
+  font-size: 32rpx;
+  margin-right: $spacing-xs;
+}
+
+.fifoTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.fifoDesc {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-left: auto;
+}
+
+.fifoCard {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  border-left: 8rpx solid #2D7D46;
+}
+
+.fifoCardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.fifoBatchNo {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.fifoOrder {
+  font-size: $font-size-xs;
+  color: $color-text-white;
+  background-color: #2D7D46;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+}
+
+.fifoBody {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+}
+
+.fifoInfoItem {
+  display: flex;
+  align-items: center;
+}
+
+.fifoInfoLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-right: 8rpx;
+}
+
+.fifoInfoValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.fifoAction {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: $spacing-md;
+  padding-top: $spacing-sm;
+  border-top: 1rpx solid $color-divider;
+}
+
+.outBtn {
+  @include button-reset;
+  height: $button-height-sm;
+  padding: 0 $spacing-lg;
+  background: linear-gradient(135deg, #2D7D46 0%, #3D9D56 100%);
+  border-radius: $radius-round;
+  color: $color-text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.recordCard {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.95;
+  }
+}
+
+.recordHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.recordNo {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.recordBody {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  padding-top: $spacing-sm;
+  border-top: 1rpx solid $color-divider;
+}
+
+.recordInfoItem {
+  display: flex;
+  align-items: center;
+}
+
+.recordInfoLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-right: 8rpx;
+}
+
+.recordInfoValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.fabButton {
+  position: fixed;
+  right: 48rpx;
+  bottom: 160rpx;
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, #2D7D46 0%, #3D9D56 100%);
+  @include flex-center;
+  box-shadow: 0 8rpx 24rpx rgba(45, 125, 70, 0.35);
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.95);
+  }
+}
+
+.fabText {
+  font-size: 52rpx;
+  color: $color-text-white;
+  line-height: 1;
+}

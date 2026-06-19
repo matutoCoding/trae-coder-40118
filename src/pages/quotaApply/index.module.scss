@@ -1,0 +1,104 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: 160rpx;
+}
+
+.formSection {
+  margin: $spacing-md $page-padding;
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-lg;
+  padding-left: $spacing-sm;
+  border-left: 6rpx solid #2D7D46;
+}
+
+.formItem {
+  margin-bottom: $spacing-lg;
+}
+
+.formLabel {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-xs;
+  display: flex;
+}
+
+.required {
+  color: #D93025;
+  margin-right: 4rpx;
+}
+
+.formInput {
+  width: 100%;
+  height: 80rpx;
+  background-color: $color-bg-page;
+  border: 1rpx solid $color-border;
+  border-radius: $radius-md;
+  padding: 0 $spacing-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.textArea {
+  width: 100%;
+  height: 160rpx;
+  background-color: $color-bg-page;
+  border: 1rpx solid $color-border;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.merchantInfo {
+  background-color: rgba(232, 168, 56, 0.08);
+  border-radius: $radius-md;
+  padding: $spacing-md $spacing-lg;
+  margin-bottom: $spacing-lg;
+  border: 1rpx solid rgba(232, 168, 56, 0.2);
+}
+
+.merchantInfoText {
+  font-size: $font-size-sm;
+  color: #C88600;
+  line-height: $line-height-normal;
+}
+
+.bottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $spacing-md $page-padding;
+  background-color: $color-bg-card;
+  box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.submitBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  background: linear-gradient(135deg, #2D7D46 0%, #3D9D56 100%);
+  border-radius: $radius-button;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+
+  &:active {
+    opacity: 0.9;
+  }
+}

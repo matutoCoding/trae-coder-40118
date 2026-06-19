@@ -1,0 +1,136 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: 40rpx;
+}
+
+.tabs {
+  display: flex;
+  background-color: $color-bg-card;
+  padding: 0 $page-padding;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: $spacing-md 0;
+  position: relative;
+}
+
+.tabText {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+}
+
+.tabActive {
+  .tabText {
+    color: #2D7D46;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.tabLine {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48rpx;
+  height: 6rpx;
+  border-radius: 3rpx;
+  background-color: #2D7D46;
+}
+
+.list {
+  padding: $spacing-md $page-padding;
+}
+
+.warningCard {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.warningCardBorder {
+  border-left: 8rpx solid #E8A838;
+}
+
+.dangerCardBorder {
+  border-left: 8rpx solid #D93025;
+}
+
+.lockedCardBorder {
+  border-left: 8rpx solid #999;
+}
+
+.warningHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.warningBatchNo {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.warningDays {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+}
+
+.warningDaysWarning {
+  color: #C88600;
+}
+
+.warningDaysDanger {
+  color: #D93025;
+}
+
+.warningDaysLocked {
+  color: #999;
+}
+
+.warningBody {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  padding-top: $spacing-sm;
+  border-top: 1rpx solid $color-divider;
+}
+
+.warningInfoItem {
+  display: flex;
+  align-items: center;
+}
+
+.warningInfoLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-right: 8rpx;
+}
+
+.warningInfoValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.lockedTag {
+  background-color: rgba(153, 153, 153, 0.15);
+  padding: 4rpx 16rpx;
+  border-radius: $radius-xs;
+  margin-top: $spacing-sm;
+  align-self: flex-start;
+}
+
+.lockedTagText {
+  font-size: $font-size-xs;
+  color: #999;
+}
